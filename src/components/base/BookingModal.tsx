@@ -9,6 +9,9 @@ interface BookingModalProps {
   guests: number;
   onSearch: (checkIn: string, checkOut: string, guests: number) => void;
   focusField?: 'checkIn' | 'checkOut' | 'guests';
+  blockedDates?: Set<string>;
+  noArrivalDates?: Set<string>;
+  minNightsByDate?: Record<string, number>;
 }
 
 export default function BookingModal({
@@ -18,7 +21,10 @@ export default function BookingModal({
   checkOut: initialCheckOut,
   guests: initialGuests,
   onSearch,
-  focusField = 'checkIn'
+  focusField = 'checkIn',
+  blockedDates,
+  noArrivalDates,
+  minNightsByDate,
 }: BookingModalProps) {
   const [tempCheckIn, setTempCheckIn] = useState(initialCheckIn);
   const [tempCheckOut, setTempCheckOut] = useState(initialCheckOut);
@@ -56,19 +62,48 @@ export default function BookingModal({
     return { daysInMonth, startingDayOfWeek, year, month };
   };
 
+  // min nights required for the currently-selected check-in date (day-of-week aware, from Hostex)
+  const minNightsForCheckIn = (): number => {
+    if (!tempCheckIn || !minNightsByDate) return 1;
+    return minNightsByDate[tempCheckIn] || 1;
+  };
+
+  // earliest sold-out night on/after a given date (you can't book a stay spanning it)
+  const firstBlockedOnOrAfter = (fromStr: string): string | null => {
+    if (!blockedDates || blockedDates.size === 0) return null;
+    let best: string | null = null;
+    for (const b of blockedDates) {
+      if (b >= fromStr && (best === null || b < best)) best = b;
+    }
+    return best;
+  };
+
   const isDateDisabled = (dateStr: string) => {
     const date = new Date(dateStr + 'T12:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Disable past dates
     if (date < today) return true;
-    
-    // If check-in is selected and we're selecting check-out, disable dates before check-in
+
     if (tempCheckIn && !tempCheckOut) {
-      return date <= new Date(tempCheckIn + 'T12:00:00');
+      // --- selecting CHECK-OUT ---
+      const checkInD = new Date(tempCheckIn + 'T12:00:00');
+      // enforce minimum stay: checkout must be >= checkIn + minNights
+      const minN = minNightsForCheckIn();
+      const earliestCheckout = new Date(checkInD);
+      earliestCheckout.setDate(earliestCheckout.getDate() + minN);
+      if (date < earliestCheckout) return true;
+      // cannot book across a sold-out night: checkout may not be later than the
+      // first sold-out night on/after check-in (checkout ON that date is fine)
+      const firstBlocked = firstBlockedOnOrAfter(tempCheckIn);
+      if (firstBlocked && dateStr > firstBlocked) return true;
+      return false;
     }
-    
+
+    // --- selecting CHECK-IN (or resetting) ---
+    if (blockedDates && blockedDates.has(dateStr)) return true;   // sold out
+    if (noArrivalDates && noArrivalDates.has(dateStr)) return true; // closed on arrival
     return false;
   };
 
@@ -222,6 +257,11 @@ export default function BookingModal({
                 <p className="text-sm text-gray-600 mb-1">
                   {tempCheckIn && !tempCheckOut ? 'Select check-out date' : 'Select check-in date'}
                 </p>
+                {tempCheckIn && !tempCheckOut && minNightsForCheckIn() > 1 && (
+                  <p className="text-xs font-medium text-amber-700 mb-1">
+                    {minNightsForCheckIn()}-night minimum for these dates
+                  </p>
+                )}
                 {tempCheckIn && tempCheckOut && (
                   <p className="text-sm font-medium text-gray-900">
                     {new Date(tempCheckIn + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(tempCheckOut + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
