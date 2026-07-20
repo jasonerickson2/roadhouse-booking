@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { rooms } from '../../mocks/rooms';
 import DatePicker from '../../components/base/DatePicker';
 import GuestSelector from '../../components/base/GuestSelector';
-import { checkAvailability, AvailabilityService } from '../../services/availability';
+import { checkAvailability, AvailabilityService, fetchRoomCalendar, RoomCalendar } from '../../services/availability';
 import BookingModal from '../../components/base/BookingModal';
 
 export default function RoomDetailPage() {
@@ -35,8 +35,17 @@ export default function RoomDetailPage() {
   const [showAllSkiResorts, setShowAllSkiResorts] = useState(false);
   const [showAllTowns, setShowAllTowns] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [calendar, setCalendar] = useState<RoomCalendar>({ blockedDates: new Set(), noArrivalDates: new Set(), minNightsByDate: {} });
 
   const room = rooms.find(r => r.id === parseInt(id || ''));
+
+  // Load this room's live blocked-dates + min-stay calendar from Hostex (via booking-api).
+  useEffect(() => {
+    if (!room) return;
+    let cancelled = false;
+    fetchRoomCalendar(room.id).then((cal) => { if (!cancelled) setCalendar(cal); });
+    return () => { cancelled = true; };
+  }, [room?.id]);
 
   // Save to sessionStorage when dates/guests change
   useEffect(() => {
@@ -140,6 +149,13 @@ export default function RoomDetailPage() {
 
     if (roomAvailabilityData && !roomAvailabilityData.isAvailable) {
       alert('This room is not available for the selected dates');
+      return;
+    }
+
+    // Enforce the room's minimum-stay for the chosen check-in date (from Hostex).
+    const minNights = calendar.minNightsByDate[checkInDate] || 1;
+    if (nights < minNights) {
+      alert(`This room requires a minimum ${minNights}-night stay for the selected dates. Please extend your stay.`);
       return;
     }
 
@@ -720,6 +736,9 @@ export default function RoomDetailPage() {
         guests={guests}
         onSearch={handleSearch}
         focusField={modalFocusField}
+        blockedDates={calendar.blockedDates}
+        noArrivalDates={calendar.noArrivalDates}
+        minNightsByDate={calendar.minNightsByDate}
       />
     </div>
   );
