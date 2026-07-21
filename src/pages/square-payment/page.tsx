@@ -18,7 +18,10 @@ export default function SquarePaymentPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [card, setCard] = useState<any>(null);
+  const [storeCard, setStoreCard] = useState(true);
+  const [wallets, setWallets] = useState<{ applePay?: any; googlePay?: any; cashApp?: any }>({});
   const cardContainerRef = useRef<HTMLDivElement>(null);
+  const authorizeTokenRef = useRef<(t: string) => Promise<void>>(async () => {});
 
   // Get booking details from URL params
   const roomId = searchParams.get('roomId') || '';
@@ -143,6 +146,37 @@ export default function SquarePaymentPage() {
         setCard(cardInstance);
         console.log('Square: card attached successfully');
 
+        // Digital wallets (Apple Pay / Google Pay / Cash App Pay). Each is best-effort:
+        // if a wallet isn't supported on this device/browser (or a domain isn't yet
+        // registered for Apple Pay), it simply won't appear and card still works.
+        try {
+          const paymentRequest = paymentsInstance.paymentRequest({
+            countryCode: 'US',
+            currencyCode: 'USD',
+            total: { amount: totalAmount.toFixed(2), label: 'Total' },
+          });
+          const w: any = {};
+          try { w.applePay = await paymentsInstance.applePay(paymentRequest); } catch (e) { console.log('Apple Pay unavailable', e); }
+          try {
+            w.googlePay = await paymentsInstance.googlePay(paymentRequest);
+            await w.googlePay.attach('#google-pay-button', { buttonColor: 'black', buttonType: 'long', buttonSizeMode: 'fill' });
+            const gp = document.getElementById('google-pay-button');
+            if (gp) gp.onclick = async () => {
+              try { const r = await w.googlePay.tokenize(); if (r.status === 'OK') await authorizeTokenRef.current(r.token); }
+              catch (e) { console.error('Google Pay error', e); }
+            };
+          } catch (e) { console.log('Google Pay unavailable', e); }
+          try {
+            w.cashApp = await paymentsInstance.cashAppPay(paymentRequest, { redirectURL: window.location.href, referenceId: `rh-${Date.now()}` });
+            await w.cashApp.attach('#cash-app-pay');
+            w.cashApp.addEventListener('ontokenization', (ev: any) => {
+              const t = ev?.detail?.tokenResult;
+              if (t?.status === 'OK') authorizeTokenRef.current(t.token);
+            });
+          } catch (e) { console.log('Cash App Pay unavailable', e); }
+          setWallets(w);
+        } catch (e) { console.log('wallets init skipped', e); }
+
       } catch (error) {
         console.error('Square initialization error:', error);
         setError('Failed to initialize payment form. Please refresh and try again.');
@@ -154,40 +188,17 @@ export default function SquarePaymentPage() {
     initSquare();
   }, []);
 
-  const handlePayment = async () => {
-    if (!card) {
-      setError('Payment form not ready');
-      return;
-    }
-
-    if (!propertyId) {
-      setError('Invalid room configuration');
-      return;
-    }
-
+  // Shared: send a Square token (from card OR a digital wallet) to booking-api.
+  const authorizeToken = async (token: string) => {
+    if (!propertyId) { setError('Invalid room configuration'); return; }
     setIsProcessing(true);
     setError(null);
-
     try {
-      // Tokenize the card
-      const tokenResult = await card.tokenize();
-      
-      if (tokenResult.status !== 'OK') {
-        setError(tokenResult.errors?.[0]?.message || 'Card validation failed');
-        setIsProcessing(false);
-        return;
-      }
-
-      console.log('Square tokenization successful, calling booking-api authorize...');
-
-      // Send payment authorization to Supabase booking-api
       const response = await fetch(`${import.meta.env.VITE_BOOKING_API_BASE}/authorize`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token: tokenResult.token,
+          token,
           amount: Math.round(totalAmount * 100), // integer cents
           currency: 'USD',
           propertyId,
@@ -195,37 +206,40 @@ export default function SquarePaymentPage() {
           checkInDate: checkIn,
           checkOutDate: checkOut,
           guests: parseInt(guests),
-          guest: {
-            firstName,
-            lastName,
-            email,
-            phone
-          }
-        })
+          cardOnFileConsent: storeCard,
+          guest: { firstName, lastName, email, phone },
+        }),
       });
-
       const data = await response.json();
       console.log('booking-api authorize response:', data);
-
       if (!response.ok || !data.ok) {
-        console.error('bookingAuthorize error:', data);
         setError(data.details?.message || data.error || 'Something went wrong authorizing your card. Please try again or contact us.');
         setIsProcessing(false);
         return;
       }
-
-      // Payment authorized successfully
-      console.log('Payment authorized successfully:', {
-        bookingRequestId: data.bookingRequestId,
-        squarePaymentId: data.squarePaymentId,
-        paymentStatus: data.paymentStatus
-      });
-
       navigate(`/confirmation?bookingId=${data.bookingRequestId}&paymentId=${data.squarePaymentId}&status=${data.paymentStatus}&roomId=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&totalAmount=${totalAmount.toFixed(2)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`);
-    } catch (error) {
-      console.error('Payment error:', error);
+    } catch (err) {
+      console.error('Payment error:', err);
       setError('Payment processing failed. Please try again or contact us.');
       setIsProcessing(false);
+    }
+  };
+
+  authorizeTokenRef.current = authorizeToken;
+
+  const handlePayment = async () => {
+    if (!card) { setError('Payment form not ready'); return; }
+    setError(null);
+    try {
+      const tokenResult = await card.tokenize();
+      if (tokenResult.status !== 'OK') {
+        setError(tokenResult.errors?.[0]?.message || 'Card validation failed');
+        return;
+      }
+      await authorizeToken(tokenResult.token);
+    } catch (err) {
+      console.error('Tokenize error:', err);
+      setError('Payment processing failed. Please try again or contact us.');
     }
   };
 
@@ -306,6 +320,30 @@ export default function SquarePaymentPage() {
 
             {/* Payment Form */}
             <div className="mb-6">
+              {/* Digital wallets (appear only when supported on this device) */}
+              <div className="mb-3 space-y-2">
+                {wallets.applePay && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try { const r = await wallets.applePay.tokenize(); if (r.status === 'OK') await authorizeToken(r.token); }
+                      catch (e) { console.error('Apple Pay error', e); }
+                    }}
+                    disabled={isProcessing}
+                    className="w-full bg-black text-white py-3 rounded-lg font-semibold flex items-center justify-center disabled:opacity-50"
+                    style={{ minHeight: '48px' }}
+                  >
+                     Pay
+                  </button>
+                )}
+                <div id="google-pay-button" style={{ minHeight: '48px' }} />
+                <div id="cash-app-pay" />
+              </div>
+              <div className="flex items-center gap-3 my-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400">or pay with card</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Card Information
@@ -338,6 +376,21 @@ export default function SquarePaymentPage() {
                   <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
+
+              {/* Card-on-file consent */}
+              <label className="flex items-start gap-2 mb-4 text-xs text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeCard}
+                  onChange={(e) => setStoreCard(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Securely save my card for this stay. I authorize Roadhouse Twin Lakes to charge this
+                  card for incidental fees &mdash; damage, extra cleaning, late checkout, or unapproved
+                  pets/guests &mdash; per the booking terms.
+                </span>
+              </label>
 
               <button
                 onClick={handlePayment}
