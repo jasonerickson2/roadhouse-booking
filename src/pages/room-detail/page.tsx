@@ -285,9 +285,9 @@ export default function RoomDetailPage() {
           Back to all rooms
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {/* Room Details */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             {/* Image Gallery */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
               {/* Main Image */}
@@ -554,8 +554,8 @@ export default function RoomDetailPage() {
           </div>
 
           {/* Booking Card - Sticky on Desktop */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:sticky lg:top-24">
+          <div className="md:col-span-1">
+            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:sticky md:top-24">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Book Your Stay</h3>
 
               <div className="space-y-4 mb-6">
