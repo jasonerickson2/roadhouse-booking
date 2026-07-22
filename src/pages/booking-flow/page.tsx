@@ -988,7 +988,7 @@ export default function BookingFlowPage() {
                   {/* Contact: Text us on mobile, Email us on desktop */}
                   <div className="mb-3">
                     <a
-                      href="sms:+17637425143"
+                      href="sms:+17192252364"
                       className="sm:hidden inline-flex items-center justify-center w-full px-6 py-3 border-2 rounded-lg font-semibold"
                       style={{ borderColor: '#1a2e1a', color: '#1a2e1a' }}
                     >
