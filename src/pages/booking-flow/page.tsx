@@ -977,37 +977,6 @@ export default function BookingFlowPage() {
                     </div>
                   </div>
 
-                  {/* Next Steps (desktop only) */}
-                  <div className="hidden sm:block bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
-                    <div className="space-y-2 text-blue-800">
-                      <div className="flex items-start">
-                        <i className="ri-time-line mr-2 mt-1 text-blue-600"></i>
-                        <span className="text-sm">We'll review your booking request within 24 hours</span>
-                      </div>
-                      <div className="flex items-start">
-                        <i className="ri-mail-line mr-2 mt-1 text-blue-600"></i>
-                        <span className="text-sm">You'll receive a confirmation email once approved</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contact Information (desktop only) */}
-                  <div className="hidden sm:block text-center mb-4">
-                    <p className="text-gray-600 mb-4">
-                      Questions about your booking? We're here to help!
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <a 
-                        href={`mailto:info@yourlodge.com?subject=${encodeURIComponent(`Booking Question - ${confirmationData.bookingId}`)}&body=${encodeURIComponent(`Hi,\\n\\nI have a question about my booking:\\n\\nBooking Reference: ${confirmationData.bookingId}\\nName: ${confirmationData.firstName} ${confirmationData.lastName}\\nEmail: ${confirmationData.email}\\n\\n`)}`}
-                        className="inline-flex items-center justify-center px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap"
-                      >
-                        <i className="ri-mail-line mr-2"></i>
-                        Email Us
-                      </a>
-                    </div>
-                  </div>
-
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link
