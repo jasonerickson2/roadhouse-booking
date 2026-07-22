@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -226,8 +227,8 @@ export default function BookingModal({
 
   const canSearch = tempCheckIn && tempCheckOut;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-0 sm:p-4 bg-black bg-opacity-50 overflow-y-auto">
+  return createPortal((
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center p-0 sm:p-4 bg-black bg-opacity-50 overflow-y-auto">
       <div className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-3xl min-h-screen sm:min-h-0 sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between z-[110]">
@@ -337,5 +338,5 @@ export default function BookingModal({
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
