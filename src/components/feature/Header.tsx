@@ -17,11 +17,6 @@ export default function Header() {
         <div className="flex items-center justify-between h-20 sm:h-24">
           {/* Logo - links to main site */}
           <a href="/" className="flex items-center gap-3 shrink-0">
-            <img
-              src="/logo.png"
-              alt="Roadhouse Twin Lakes"
-              className="h-14 sm:h-16 md:h-20 w-auto"
-            />
             <div>
               <span
                 className="block text-base sm:text-lg md:text-xl tracking-wider uppercase leading-tight"
