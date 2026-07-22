@@ -555,7 +555,8 @@ export default function RoomDetailPage() {
 
           {/* Booking Card - Sticky on Desktop */}
           <div className="md:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:sticky md:top-24">
+            <div className="bg-white rounded-2xl shadow-lg md:sticky md:top-24 md:max-h-[calc(100vh-7rem)] md:flex md:flex-col md:overflow-hidden">
+              <div className="p-4 sm:p-6 md:overflow-y-auto md:flex-1">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Book Your Stay</h3>
 
               <div className="space-y-4 mb-6">
@@ -660,17 +661,21 @@ export default function RoomDetailPage() {
                 </div>
               )}
 
-              <button
-                onClick={handleBookNow}
-                disabled={!checkInDate || !checkOutDate || isCheckingAvailability || (roomAvailabilityData && !roomAvailabilityData.isAvailable)}
-                className="w-full bg-[#1a2e1a] hover:bg-[#2a4e2a] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-colors whitespace-nowrap hidden lg:block"
-              >
-                {isCheckingAvailability ? 'Checking...' : 'Book Now'}
-              </button>
+              </div>
 
-              <p className="text-xs text-gray-500 text-center mt-4 hidden lg:block">
-                You won't be charged yet
-              </p>
+              <div className="hidden md:block p-4 sm:p-6 border-t border-gray-100">
+                <button
+                  onClick={handleBookNow}
+                  disabled={!checkInDate || !checkOutDate || isCheckingAvailability || (roomAvailabilityData && !roomAvailabilityData.isAvailable)}
+                  className="w-full bg-[#1a2e1a] hover:bg-[#2a4e2a] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-colors whitespace-nowrap"
+                >
+                  {isCheckingAvailability ? 'Checking...' : 'Book Now'}
+                </button>
+
+                <p className="text-xs text-gray-500 text-center mt-4">
+                  You won't be charged yet
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -678,7 +683,7 @@ export default function RoomDetailPage() {
 
       {/* Floating Booking Button - Mobile Only */}
       {showFloatingBooking && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-40 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-40 md:hidden">
           <div className="max-w-7xl mx-auto">
             {/* Dates and Pricing Info */}
             <div className="mb-3">
