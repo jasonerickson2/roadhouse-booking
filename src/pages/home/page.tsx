@@ -437,7 +437,7 @@ export default function HomePage() {
               <div
                 key={room.id}
                 className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 border border-[#e8ddd3] ${
-                  'hover:shadow-xl'
+                  shouldShowPrices && !available ? 'opacity-70' : 'hover:shadow-xl'
                 }`}
               >
                 <div className="flex flex-col lg:flex-row">
@@ -522,13 +522,18 @@ export default function HomePage() {
                           View Details
                         </Link>
                       ) : shouldShowPrices ? (
-                        <button
-                          onClick={() => openRoomAvailability(room.id)}
-                          className="order-1 sm:order-2 w-full sm:w-auto border-2 px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap text-center hover:bg-[#1a2e1a] hover:text-white"
-                          style={{ borderColor: '#1a2e1a', color: '#1a2e1a' }}
-                        >
-                          See available dates
-                        </button>
+                        <div className="order-1 sm:order-2 w-full sm:w-auto flex flex-col items-stretch gap-1.5">
+                          <div className="bg-gray-200 text-gray-600 px-6 py-3 rounded-lg font-semibold whitespace-nowrap text-center">
+                            Unavailable
+                          </div>
+                          <button
+                            onClick={() => openRoomAvailability(room.id)}
+                            className="text-sm font-semibold underline whitespace-nowrap text-center hover:opacity-70"
+                            style={{ color: '#1a2e1a' }}
+                          >
+                            See available dates
+                          </button>
+                        </div>
                       ) : (
                         <Link
                           to={`/room/${room.id}?${formatSearchParams()}`}
