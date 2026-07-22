@@ -40,6 +40,8 @@ export default function BookingFlowPage() {
   const [storeCard, setStoreCard] = useState(true);
   const [wallets, setWallets] = useState<{ applePay?: any; googlePay?: any; cashApp?: any }>({});
   const submitTokenRef = useRef<(t: string) => Promise<void>>(async () => {});
+  const paymentsRef = useRef<any>(null);
+  const walletsInitedRef = useRef(false);
 
   // Confirmation data
   const [confirmationData, setConfirmationData] = useState<any>(null);
@@ -77,6 +79,42 @@ export default function BookingFlowPage() {
     window.scrollTo(0, 0);
   }, []);
 
+  // Digital wallets need the correct, non-zero PaymentRequest total (Apple Pay rejects a
+  // $0 total). Called once the price is known. Errors are surfaced to the UI, not swallowed.
+  const initializeWallets = async (payments: any, total: number) => {
+    if (walletsInitedRef.current || !payments || !(total > 0)) return;
+    walletsInitedRef.current = true;
+    try {
+      const paymentRequest = payments.paymentRequest({
+        countryCode: 'US',
+        currencyCode: 'USD',
+        total: { amount: total.toFixed(2), label: 'Total' },
+      });
+      const w: any = {};
+      try { w.applePay = await payments.applePay(paymentRequest); } catch (e) { console.log('Apple Pay unavailable', e); }
+      try {
+        w.googlePay = await payments.googlePay(paymentRequest);
+        await w.googlePay.attach('#google-pay-button', { buttonColor: 'black', buttonType: 'long', buttonSizeMode: 'fill' });
+        const gp = document.getElementById('google-pay-button');
+        if (gp) gp.onclick = async () => {
+          setPaymentError(null);
+          try { const r = await w.googlePay.tokenize(); if (r.status === 'OK') await submitTokenRef.current(r.token); else setPaymentError(`Google Pay didn't complete (${r.status}). Please try the card instead.`); }
+          catch (e: any) { setPaymentError('Google Pay error: ' + (e?.message || String(e))); }
+        };
+      } catch (e) { console.log('Google Pay unavailable', e); }
+      try {
+        w.cashApp = await payments.cashAppPay(paymentRequest, { redirectURL: window.location.href, referenceId: `rh-${Date.now()}` });
+        await w.cashApp.attach('#cash-app-pay');
+        w.cashApp.addEventListener('ontokenization', (ev: any) => {
+          const t = ev?.detail?.tokenResult;
+          if (t?.status === 'OK') submitTokenRef.current(t.token);
+          else if (t && t.status && t.status !== 'OK') setPaymentError(`Cash App Pay didn't complete (${t.status}). Please try the card instead.`);
+        });
+      } catch (e) { console.log('Cash App Pay unavailable', e); }
+      setWallets(w);
+    } catch (e) { walletsInitedRef.current = false; console.log('wallets init skipped', e); }
+  };
+
   const initializeSquarePayment = async () => {
     if (isInitializingSquare) return;
     
@@ -113,42 +151,17 @@ export default function BookingFlowPage() {
         import.meta.env.VITE_SQUARE_APP_ID,
         'LPGHKRDBDY4C7'
       );
+      paymentsRef.current = payments;
 
       const card = await payments.card();
       await card.attach('#card-container');
       setSquareCard(card);
       console.log('Square card initialized successfully');
 
-      // Digital wallets (Apple Pay / Google Pay / Cash App Pay). Best-effort: if a
-      // wallet isn't supported on this device/browser (or a domain isn't registered
-      // for Apple Pay / not in production), it simply won't appear; card still works.
-      try {
-        const paymentRequest = payments.paymentRequest({
-          countryCode: 'US',
-          currencyCode: 'USD',
-          total: { amount: (totalAmount || 0).toFixed(2), label: 'Total' },
-        });
-        const w: any = {};
-        try { w.applePay = await payments.applePay(paymentRequest); } catch (e) { console.log('Apple Pay unavailable', e); }
-        try {
-          w.googlePay = await payments.googlePay(paymentRequest);
-          await w.googlePay.attach('#google-pay-button', { buttonColor: 'black', buttonType: 'long', buttonSizeMode: 'fill' });
-          const gp = document.getElementById('google-pay-button');
-          if (gp) gp.onclick = async () => {
-            try { const r = await w.googlePay.tokenize(); if (r.status === 'OK') await submitTokenRef.current(r.token); }
-            catch (e) { console.error('Google Pay error', e); }
-          };
-        } catch (e) { console.log('Google Pay unavailable', e); }
-        try {
-          w.cashApp = await payments.cashAppPay(paymentRequest, { redirectURL: window.location.href, referenceId: `rh-${Date.now()}` });
-          await w.cashApp.attach('#cash-app-pay');
-          w.cashApp.addEventListener('ontokenization', (ev: any) => {
-            const t = ev?.detail?.tokenResult;
-            if (t?.status === 'OK') submitTokenRef.current(t.token);
-          });
-        } catch (e) { console.log('Cash App Pay unavailable', e); }
-        setWallets(w);
-      } catch (e) { console.log('wallets init skipped', e); }
+      // Digital wallets are initialized once the price is known (Apple Pay needs a real
+      // non-zero total). Try now (price is usually loaded); the effect covers late pricing.
+      const walletTotal = (pricingData as any)?.totalAmount || 0;
+      if (walletTotal > 0) await initializeWallets(payments, walletTotal);
     } catch (error) {
       console.error('Failed to initialize Square payment:', error);
       setPaymentError('Failed to initialize payment form. Please refresh the page.');
@@ -184,6 +197,14 @@ export default function BookingFlowPage() {
 
     fetchPricing();
   }, [checkIn, checkOut, guests, room]);
+
+  // Initialize digital wallets once the price (total) is known — Apple Pay requires it.
+  useEffect(() => {
+    const total = (pricingData as any)?.totalAmount || 0;
+    if (currentStep === 'payment' && paymentsRef.current && total > 0 && !walletsInitedRef.current) {
+      initializeWallets(paymentsRef.current, total);
+    }
+  }, [currentStep, pricingData]);
 
   if (!room || !checkIn || !checkOut) {
     return (
@@ -827,8 +848,9 @@ export default function BookingFlowPage() {
                         <button
                           type="button"
                           onClick={async () => {
-                            try { const r = await wallets.applePay.tokenize(); if (r.status === 'OK') await submitToken(r.token); }
-                            catch (e) { console.error('Apple Pay error', e); }
+                            setPaymentError(null);
+                            try { const r = await wallets.applePay.tokenize(); if (r.status === 'OK') await submitToken(r.token); else setPaymentError(`Apple Pay didn't complete (${r.status}). Please try the card instead.`); }
+                            catch (e: any) { setPaymentError('Apple Pay error: ' + (e?.message || String(e))); }
                           }}
                           disabled={isProcessingPayment}
                           className="w-full bg-black text-white py-3 rounded-lg font-semibold flex items-center justify-center disabled:opacity-50"
