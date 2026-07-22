@@ -111,7 +111,7 @@ export default function BookingFlowPage() {
       console.log('Initializing Square payments...');
       const payments = (window as any).Square.payments(
         import.meta.env.VITE_SQUARE_APP_ID,
-        'L0YVVDQM2REPZ'
+        'LPGHKRDBDY4C7'
       );
 
       const card = await payments.card();
