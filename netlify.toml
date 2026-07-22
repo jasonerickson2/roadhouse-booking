@@ -2,6 +2,14 @@
   publish = "out"
   command = "npm install --legacy-peer-deps && npm run build"
 
+# Apple Pay domain verification — proxy Square's always-current file to our /.well-known path.
+# Must come BEFORE the SPA catch-all so it isn't rewritten to index.html.
+[[redirects]]
+  from = "/.well-known/apple-developer-merchantid-domain-association"
+  to = "https://app.squareup.com/digital-wallets/apple-pay/apple-developer-merchantid-domain-association"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
