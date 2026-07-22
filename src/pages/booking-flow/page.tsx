@@ -912,25 +912,25 @@ export default function BookingFlowPage() {
               {currentStep === 'confirmation' && confirmationData && (
                 <>
                   {/* Success Icon */}
-                  <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <i className="ri-check-line text-3xl text-[#1a2e1a]"></i>
+                  <div className="text-center mb-4">
+                    <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <i className="ri-check-line text-2xl text-[#1a2e1a]"></i>
                     </div>
 
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-1">
                       Booking Request Submitted!
                     </h1>
-                    
-                    <p className="text-lg text-gray-600 mb-8">
-                      Your payment has been authorized and your request is pending review. We'll confirm your booking shortly.
+
+                    <p className="text-sm text-gray-600">
+                      Payment authorized — your request is pending review. We'll confirm shortly.
                     </p>
                   </div>
 
                   {/* Reservation Details */}
-                  <div className="bg-stone-50 rounded-lg p-6 mb-8">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center">Reservation Details</h2>
-                    
-                    <div className="space-y-3">
+                  <div className="bg-stone-50 rounded-lg p-4 mb-4">
+                    <h2 className="text-base font-semibold text-gray-900 mb-3 text-center">Reservation Details</h2>
+
+                    <div className="space-y-1.5 text-sm">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Status:</span>
                         <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
@@ -977,8 +977,8 @@ export default function BookingFlowPage() {
                     </div>
                   </div>
 
-                  {/* Next Steps */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                  {/* Next Steps (desktop only) */}
+                  <div className="hidden sm:block bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                     <h3 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
                     <div className="space-y-2 text-blue-800">
                       <div className="flex items-start">
@@ -992,8 +992,8 @@ export default function BookingFlowPage() {
                     </div>
                   </div>
 
-                  {/* Contact Information */}
-                  <div className="text-center mb-8">
+                  {/* Contact Information (desktop only) */}
+                  <div className="hidden sm:block text-center mb-4">
                     <p className="text-gray-600 mb-4">
                       Questions about your booking? We're here to help!
                     </p>
