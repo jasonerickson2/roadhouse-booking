@@ -104,7 +104,7 @@ export default function RoomDetailPage() {
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerWidth < 1024) {
-        setShowFloatingBooking(window.scrollY > 400);
+        setShowFloatingBooking(true);
       } else {
         setShowFloatingBooking(false);
       }
