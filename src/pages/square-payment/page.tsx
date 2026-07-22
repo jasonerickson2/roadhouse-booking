@@ -94,7 +94,7 @@ export default function SquarePaymentPage() {
         // Load Square Web Payments SDK
         if (!window.Square) {
           const script = document.createElement('script');
-          script.src = 'https://sandbox.web.squarecdn.com/v1/square.js';
+          script.src = 'https://web.squarecdn.com/v1/square.js';
           script.async = true;
           document.head.appendChild(script);
           
@@ -111,7 +111,7 @@ export default function SquarePaymentPage() {
         // Initialize Square Payments with your sandbox credentials
         const paymentsInstance = await window.Square.payments(
           import.meta.env.VITE_SQUARE_APP_ID,  // Application ID
-          'L0YVVDQM2REPZ'                            // Location ID
+          'LPGHKRDBDY4C7'                            // Location ID
         );
         
         const cardInstance = await paymentsInstance.card({
