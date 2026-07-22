@@ -42,6 +42,7 @@ export default function BookingFlowPage() {
   const submitTokenRef = useRef<(t: string) => Promise<void>>(async () => {});
   const paymentsRef = useRef<any>(null);
   const walletsInitedRef = useRef(false);
+  const submitInFlightRef = useRef(false);
 
   // Confirmation data
   const [confirmationData, setConfirmationData] = useState<any>(null);
@@ -113,6 +114,15 @@ export default function BookingFlowPage() {
       } catch (e) { console.log('Cash App Pay unavailable', e); }
       setWallets(w);
     } catch (e) { walletsInitedRef.current = false; console.log('wallets init skipped', e); }
+  };
+
+  // Rebuild wallet instances so a retry always gets a FRESH single-use nonce (avoids CARD_TOKEN_USED).
+  const refreshWallets = () => {
+    walletsInitedRef.current = false;
+    const total = (pricingData as any)?.totalAmount || 0;
+    const gp = document.getElementById('google-pay-button'); if (gp) gp.innerHTML = '';
+    const ca = document.getElementById('cash-app-pay'); if (ca) ca.innerHTML = '';
+    if (paymentsRef.current && total > 0) initializeWallets(paymentsRef.current, total);
   };
 
   const initializeSquarePayment = async () => {
@@ -312,6 +322,9 @@ export default function BookingFlowPage() {
   };
 
   const submitToken = async (paymentToken: string) => {
+    if (submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
+    let submitSucceeded = false;
     setIsProcessingPayment(true);
     setPaymentError(null);
 
@@ -398,6 +411,7 @@ export default function BookingFlowPage() {
         }
 
         // Success - show confirmation on same page
+        submitSucceeded = true;
         setConfirmationData({
           bookingId: data.bookingRequestId,
           paymentId: data.squarePaymentId,
@@ -413,6 +427,8 @@ export default function BookingFlowPage() {
       setPaymentError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsProcessingPayment(false);
+      submitInFlightRef.current = false;
+      if (!submitSucceeded) { try { refreshWallets(); } catch (e) { /* noop */ } }
     }
   };
 
