@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import BookingModal from '../../components/base/BookingModal';
 import { rooms } from '../../mocks/rooms';
-import { AvailabilityService } from '../../services/availability';
+import { AvailabilityService, fetchRoomCalendar, RoomCalendar } from '../../services/availability';
 
 interface AvailabilityRoom {
   roomId: number;  // Changed from string to number
@@ -25,6 +25,7 @@ interface AvailabilityRoom {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   // Initialize from sessionStorage if available
   const [checkIn, setCheckIn] = useState<string>(() => {
     return sessionStorage.getItem('searchCheckIn') || '';
@@ -41,6 +42,9 @@ export default function HomePage() {
   const [availabilityData, setAvailabilityData] = useState<AvailabilityRoom[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [availRoomId, setAvailRoomId] = useState<number | null>(null);
+  const [availCal, setAvailCal] = useState<RoomCalendar>({ blockedDates: new Set(), noArrivalDates: new Set(), minNightsByDate: {} });
+  const [availOpen, setAvailOpen] = useState(false);
   const roomsSectionRef = useRef<HTMLDivElement>(null);
 
   // Save to sessionStorage whenever values change
@@ -81,6 +85,27 @@ export default function HomePage() {
     setTimeout(() => {
       handleSearchWithParams(newCheckIn, newCheckOut, newGuests);
     }, 0);
+  };
+
+  // Open a per-room availability calendar (booked dates blocked, open dates selectable).
+  const openRoomAvailability = async (roomId: number) => {
+    setAvailRoomId(roomId);
+    setAvailCal({ blockedDates: new Set(), noArrivalDates: new Set(), minNightsByDate: {} });
+    setAvailOpen(true);
+    try {
+      const cal = await fetchRoomCalendar(roomId);
+      setAvailCal(cal);
+    } catch (e) {
+      console.error('room availability fetch failed', e);
+    }
+  };
+
+  // Guest picked open dates in that room's calendar -> jump straight into booking it.
+  const handleAvailabilityPick = (ci: string, co: string, g: number) => {
+    setAvailOpen(false);
+    if (availRoomId != null) {
+      navigate(`/room/${availRoomId}?checkIn=${ci}&checkOut=${co}&guests=${g}`);
+    }
   };
 
   const handleSearchWithParams = async (searchCheckIn: string, searchCheckOut: string, searchGuests: number) => {
@@ -206,6 +231,19 @@ export default function HomePage() {
         checkOut={checkOut}
         guests={guests}
         onSearch={handleBookingSearch}
+      />
+
+      {/* Per-room availability calendar (opened from an unavailable room card) */}
+      <BookingModal
+        isOpen={availOpen}
+        onClose={() => setAvailOpen(false)}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        guests={guests}
+        onSearch={handleAvailabilityPick}
+        blockedDates={availCal.blockedDates}
+        noArrivalDates={availCal.noArrivalDates}
+        minNightsByDate={availCal.minNightsByDate}
       />
 
       {/* Hero Section */}
@@ -399,7 +437,7 @@ export default function HomePage() {
               <div
                 key={room.id}
                 className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 border border-[#e8ddd3] ${
-                  shouldShowPrices && !available ? 'opacity-60' : 'hover:shadow-xl'
+                  'hover:shadow-xl'
                 }`}
               >
                 <div className="flex flex-col lg:flex-row">
@@ -484,9 +522,13 @@ export default function HomePage() {
                           View Details
                         </Link>
                       ) : shouldShowPrices ? (
-                        <div className="order-1 sm:order-2 w-full sm:w-auto bg-gray-200 text-gray-600 px-6 py-3 rounded-lg font-semibold whitespace-nowrap text-center">
-                          Not Available
-                        </div>
+                        <button
+                          onClick={() => openRoomAvailability(room.id)}
+                          className="order-1 sm:order-2 w-full sm:w-auto border-2 px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap text-center hover:bg-[#1a2e1a] hover:text-white"
+                          style={{ borderColor: '#1a2e1a', color: '#1a2e1a' }}
+                        >
+                          See available dates
+                        </button>
                       ) : (
                         <Link
                           to={`/room/${room.id}?${formatSearchParams()}`}
