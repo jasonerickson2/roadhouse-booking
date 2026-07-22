@@ -321,8 +321,9 @@ export default function BookingFlowPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const submitToken = async (paymentToken: string) => {
-    if (submitInFlightRef.current) return;
+  const submitToken = async (paymentToken: string, opts: { suppressError?: boolean } = {}): Promise<{ ok: boolean; retriable: boolean; message: string }> => {
+    const suppress = opts.suppressError === true;
+    if (submitInFlightRef.current) return { ok: false, retriable: false, message: '' };
     submitInFlightRef.current = true;
     let submitSucceeded = false;
     setIsProcessingPayment(true);
@@ -341,9 +342,10 @@ export default function BookingFlowPage() {
         const roomIdNum = parseInt(roomId || '0');
         const thisRoom = availCheck.rooms.find((r: any) => r.roomId === roomIdNum);
         if (!thisRoom?.isAvailable) {
-          setPaymentError('Sorry, this room was just booked by someone else for your dates. Please go back and choose different dates or another room.');
+          const msg = 'Sorry, this room was just booked by someone else for your dates. Please go back and choose different dates or another room.';
+          if (!suppress) setPaymentError(msg);
           setIsProcessingPayment(false);
-          return;
+          return { ok: false, retriable: false, message: msg };
         }
       }
 
@@ -405,9 +407,12 @@ export default function BookingFlowPage() {
 
         if (!response.ok || !data.ok) {
           console.error('bookingAuthorize error:', data);
-          setPaymentError(data.details?.message || data.error || 'Something went wrong authorizing your card. Please try again or contact us.');
+          const cat = data?.details?.category;
+          const retriable = !response.ok || cat === 'AUTHENTICATION_ERROR' || cat === 'API_ERROR';
+          const msg = data.details?.message || data.error || 'Something went wrong authorizing your card. Please try again or contact us.';
+          if (!suppress) setPaymentError(msg);
           setIsProcessingPayment(false);
-          return;
+          return { ok: false, retriable, message: msg };
         }
 
         // Success - show confirmation on same page
@@ -420,11 +425,14 @@ export default function BookingFlowPage() {
         });
         setCurrentStep('confirmation');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        return { ok: true, retriable: false, message: '' };
 
       }
     } catch (error: any) {
       console.error('Payment error:', error);
-      setPaymentError(error.message || 'An unexpected error occurred. Please try again.');
+      const msg = error.message || 'An unexpected error occurred. Please try again.';
+      if (!suppress) setPaymentError(msg);
+      return { ok: false, retriable: true, message: msg };
     } finally {
       setIsProcessingPayment(false);
       submitInFlightRef.current = false;
@@ -443,12 +451,21 @@ export default function BookingFlowPage() {
     try {
       console.log('Tokenizing card...');
       const tokenResult = await squareCard.tokenize();
-      if (tokenResult.status === 'OK') {
-        await submitToken(tokenResult.token);
-      } else {
+      if (tokenResult.status !== 'OK') {
         console.error('Tokenization failed:', tokenResult.errors);
         setPaymentError(tokenResult.errors?.[0]?.message || 'Card validation failed. Please check your card details.');
+        return;
       }
+      // Submit; on a TRANSIENT failure (brief auth/network blip, not a decline) retry once
+      // silently with a fresh card token so the guest never sees a one-off error.
+      let res = await submitToken(tokenResult.token, { suppressError: true });
+      if (!res.ok && res.retriable) {
+        console.log('Transient payment failure - retrying once with a fresh token...');
+        await new Promise((r) => setTimeout(r, 800));
+        const t2 = await squareCard.tokenize();
+        if (t2.status === 'OK') res = await submitToken(t2.token, { suppressError: true });
+      }
+      if (!res.ok) setPaymentError(res.message || 'Something went wrong authorizing your card. Please try again or contact us.');
     } catch (error: any) {
       console.error('Tokenize error:', error);
       setPaymentError(error.message || 'An unexpected error occurred. Please try again.');
