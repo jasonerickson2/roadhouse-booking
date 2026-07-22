@@ -513,8 +513,8 @@ export default function BookingFlowPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Booking Summary - Show FIRST on mobile, SECOND on desktop */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
+          {/* Booking Summary - Show FIRST on mobile, SECOND on desktop; hidden on the submitted step */}
+          <div className={`lg:col-span-1 order-1 lg:order-2 ${currentStep === 'confirmation' ? 'hidden' : ''}`}>
             <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:sticky lg:top-24">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-6">Booking Summary</h3>
               
@@ -975,6 +975,32 @@ export default function BookingFlowPage() {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* What's next (compact, both) */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 text-sm text-blue-800">
+                    <div className="flex items-start">
+                      <i className="ri-time-line mr-2 mt-0.5 text-blue-600"></i>
+                      <span>We'll review your request within 24 hours and email you once it's approved.</span>
+                    </div>
+                  </div>
+
+                  {/* Contact: Text us on mobile, Email us on desktop */}
+                  <div className="mb-3">
+                    <a
+                      href="sms:+17637425143"
+                      className="sm:hidden inline-flex items-center justify-center w-full px-6 py-3 border-2 rounded-lg font-semibold"
+                      style={{ borderColor: '#1a2e1a', color: '#1a2e1a' }}
+                    >
+                      <i className="ri-message-2-line mr-2"></i> Text Us a Question
+                    </a>
+                    <a
+                      href={`mailto:erja8030@gmail.com?subject=${encodeURIComponent('Booking Question - ' + confirmationData.bookingId)}`}
+                      className="hidden sm:inline-flex items-center justify-center w-full px-6 py-3 border-2 rounded-lg font-semibold"
+                      style={{ borderColor: '#1a2e1a', color: '#1a2e1a' }}
+                    >
+                      <i className="ri-mail-line mr-2"></i> Email Us a Question
+                    </a>
                   </div>
 
                   {/* Action Buttons */}
