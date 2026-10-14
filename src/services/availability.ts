@@ -81,11 +81,12 @@ const BOOKING_API_BASE = import.meta.env.VITE_BOOKING_API_BASE;
 function isProdOrigin(): boolean {
   const origin = window.location.origin;
   return (
-    origin === 'https://onlinebooking.roadhousetwinlakes.com' ||
+    origin === 'https://roadhouse.milehigh.systems' ||
     origin === 'https://roadhousetwinlakes.com' ||
     origin === 'https://www.roadhousetwinlakes.com' ||
-    origin.includes('netlify.app') ||
-    origin.includes('localhost')
+    origin === 'https://roadhouse-booking.netlify.app' ||
+    /^https:\/\/deploy-preview-\d+--roadhouse-booking\.netlify\.app$/.test(origin) ||
+    origin.startsWith('http://localhost')
   );
 }
 
@@ -150,7 +151,7 @@ export class AvailabilityService {
     // Check if running on production origin
     if (!isProdOrigin()) {
       console.warn('⚠️ Preview mode detected - using mock availability data');
-      console.warn('💡 Live availability only works on published site: roadhousetwinlakes.com');
+      console.warn('💡 Live availability only works on the published site: roadhouse.milehigh.systems');
       
       // Return mock data for preview - simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));

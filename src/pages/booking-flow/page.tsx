@@ -507,7 +507,7 @@ export default function BookingFlowPage() {
               <div><i>2</i><span><b>4pm the day before check in:</b> your door code, parking and directions arrive by text and email.</span></div>
               <div><i>3</i><span><b>Check in from {earlyHours > 0 ? earlyLabel : '4pm'}.</b> Let yourself in. Checkout by {late ? '11am' : '10am'}.</span></div>
             </div>
-            <span className="fine">Request {confirmationData.bookingId}. Questions? <a href={`mailto:erja8030@gmail.com?subject=${encodeURIComponent('Booking question ' + confirmationData.bookingId)}`}>Email us</a> or <a href="sms:+17192252364">text us</a>.</span>
+            <span className="fine">Request {confirmationData.bookingId}. Questions? Call <a href="tel:+17192252364">719 225 2364</a>.</span>
             <Link className="btn btn-line" to="/">Back to the lodge</Link>
           </div>
         </div>
