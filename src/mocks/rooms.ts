@@ -147,7 +147,7 @@ export const rooms = [
       'https://imagedelivery.net/Erxl2GS_CcQSVQujmLkDkQ/system@c04123cf-cad6-a4f0-13ab-504c71bf2f7f/w960'
     ],
     description: 'The crown jewel of the Roadhouse Lodge - our biggest apartment with 2 bedrooms, large windows, and mountain and lake views. Sleeps 4 with a full kitchen, natural light everywhere, and the closest lodging to the glacial lakes.',
-    longDescription: 'The Penthouse is the largest space at the Roadhouse Lodge and it earns the name. Two bedrooms, big windows on every side, and the kind of natural light that makes you want to leave the curtains open all day. You get mountain views, lake views, and a full kitchen to cook in after a long day outside.\n\nThis is our only unit that sleeps four comfortably, so it works well for couples traveling together or a small family. Both bedrooms have Queen Perfect Sleeper mattresses, and the open living area gives you room to spread out without feeling on top of each other.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Gourmet coffee and soft serve are available on-site during season (May–October). Food trucks set up next door in summer, and the village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, fish the Arkansas, or drive Independence Pass to Aspen in summer. In winter you\'re close to Ski Cooper, Copper, Monarch, and Vail. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions and expect quiet vibes in spring and winter.',
+    longDescription: 'The Penthouse is the largest space at the Roadhouse Lodge and it earns the name. Two bedrooms, big windows on every side, and the kind of natural light that makes you want to leave the curtains open all day. You get mountain views, lake views, and a full kitchen to cook in after a long day outside.\n\nThis is our only unit that sleeps four comfortably, so it works well for couples traveling together or a small family. Both bedrooms have Queen Perfect Sleeper mattresses, and the open living area gives you room to spread out without feeling on top of each other.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Free coffee in the lobby year round, and our café on site serves espresso and soft serve in summer. Food trucks set up next door in summer, and the village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, fish the Arkansas, or drive Independence Pass to Aspen in summer. In winter you\'re close to Ski Cooper, Copper, Monarch, and Vail. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions and expect quiet vibes in spring and winter.',
     highlights: [
       {
         title: 'Our biggest space',
@@ -160,8 +160,8 @@ export const rooms = [
         icon: 'ri-landscape-line'
       },
       {
-        title: 'Coffee & soft serve',
-        description: 'Gourmet coffee and soft serve available on-site during season (May–October)',
+        title: 'Free coffee in the lobby',
+        description: 'Help yourself any time of year. Our café on site does espresso and soft serve in summer.',
         icon: 'ri-cup-line'
       }
     ],
@@ -230,7 +230,7 @@ export const rooms = [
     name: "Cabin 5 - The Carriage House",
     location: "Twin Lakes, Colorado",
     description: "The Carriage House - a standalone suite with a queen bed, gas log fireplace, small kitchen, and a deck overlooking the lake. Our most romantic spot and a perfect 5.0 rating.",
-    longDescription: "If you're looking for a romantic getaway in the mountains, this is the one. The Carriage House is a standalone suite next to the Roadhouse Lodge with its own private entrance, a queen bed, a gas log fireplace, a small kitchen, and a deck with a view of the lake.\n\nIt's the kind of place where you light the fire, cook breakfast together, and don't leave until you feel like it. The space is small enough to feel cozy and private, but has everything you need - full bath, TV, Wi-Fi, and your own kitchen setup.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Gourmet coffee and soft serve are available on-site during season (May–October). Food trucks set up next door in summer, and the village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, drive Independence Pass to Aspen in summer, or hit Ski Cooper, Copper, and Vail in winter. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions.",
+    longDescription: "If you're looking for a romantic getaway in the mountains, this is the one. The Carriage House is a standalone suite next to the Roadhouse Lodge with its own private entrance, a queen bed, a gas log fireplace, a small kitchen, and a deck with a view of the lake.\n\nIt's the kind of place where you light the fire, cook breakfast together, and don't leave until you feel like it. The space is small enough to feel cozy and private, but has everything you need - full bath, TV, Wi-Fi, and your own kitchen setup.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Free coffee in the lobby year round, and our café on site serves espresso and soft serve in summer. Food trucks set up next door in summer, and the village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, drive Independence Pass to Aspen in summer, or hit Ski Cooper, Copper, and Vail in winter. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions.",
     guests: 2,
     bedrooms: 1,
     beds: 1,
@@ -340,7 +340,7 @@ export const rooms = [
     name: "Room 3",
     location: "Twin Lakes, Colorado",
     description: "Our biggest room in the lodge - sleeps 4 with two full beds and a queen futon. Great for families or friends traveling together, with a private bath and your own entrance.",
-    longDescription: "Room 3 is the biggest room inside the Roadhouse Lodge. Two full-size beds plus a queen futon means you can fit a family or a few friends without anyone sleeping on the floor. It has its own private bathroom and a private exterior entrance, so you come and go on your schedule.\n\nThis is a solid option if you want to be right in Twin Lakes Village without paying for a full cabin or apartment. You get everything you need - Wi-Fi, TV, mini fridge, microwave - and you're steps from the lake and the Mt. Elbert trailhead.\n\nGourmet coffee and soft serve are available on-site during season (May–October). Food trucks set up next door in summer, and the village has an art gallery and gift shop within walking distance (summer/fall). Leadville and Buena Vista are each about 20-25 minutes for more dining and shopping.\n\nKayak, paddleboard, or fish on the lake. Hike fourteeners. Drive Independence Pass to Aspen in summer. Ski Cooper, Copper, Monarch, and Vail in winter. It's all close.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions.",
+    longDescription: "Room 3 is the biggest room inside the Roadhouse Lodge. Two full-size beds plus a queen futon means you can fit a family or a few friends without anyone sleeping on the floor. It has its own private bathroom and a private exterior entrance, so you come and go on your schedule.\n\nThis is a solid option if you want to be right in Twin Lakes Village without paying for a full cabin or apartment. You get everything you need - Wi-Fi, TV, mini fridge, microwave - and you're steps from the lake and the Mt. Elbert trailhead.\n\nFree coffee in the lobby year round, and our café on site serves espresso and soft serve in summer. Food trucks set up next door in summer, and the village has an art gallery and gift shop within walking distance (summer/fall). Leadville and Buena Vista are each about 20-25 minutes for more dining and shopping.\n\nKayak, paddleboard, or fish on the lake. Hike fourteeners. Drive Independence Pass to Aspen in summer. Ski Cooper, Copper, Monarch, and Vail in winter. It's all close.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions.",
     guests: 4,
     bedrooms: 1,
     beds: 3,
@@ -403,8 +403,8 @@ export const rooms = [
         icon: 'ri-door-line'
       },
       {
-        title: 'Coffee & soft serve',
-        description: 'Gourmet coffee and soft serve available on-site during season (May–October)',
+        title: 'Free coffee in the lobby',
+        description: 'Help yourself any time of year. Our café on site does espresso and soft serve in summer.',
         icon: 'ri-cup-line'
       }
     ],
@@ -444,7 +444,7 @@ export const rooms = [
     name: "Room 2",
     location: "Twin Lakes, Colorado",
     description: "Our romantic favorite - the biggest double-occupancy room with a queen bed, 1.5 bath, your own porch, and mountain views with the lake right across the street.",
-    longDescription: "Room 2 is our most popular room for couples. It's the largest double-occupancy room at the lodge with a queen bed, 1.5 bathrooms (the only room with a half bath), a porch, and your own private exterior entrance. You get mountain views and the lake is right across the street.\n\nIt books fast, especially in summer. The room has comfortable furnishings, Wi-Fi, TV, and a mini fridge. Nothing fancy, just done well.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Gourmet coffee and soft serve are available on-site during season (May–October), and food trucks set up next door in summer. The village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, fish the Arkansas, or drive Independence Pass to Aspen in summer. In winter you're close to Ski Cooper, Copper, Monarch, and Vail. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions.",
+    longDescription: "Room 2 is our most popular room for couples. It's the largest double-occupancy room at the lodge with a queen bed, 1.5 bathrooms (the only room with a half bath), a porch, and your own private exterior entrance. You get mountain views and the lake is right across the street.\n\nIt books fast, especially in summer. The room has comfortable furnishings, Wi-Fi, TV, and a mini fridge. Nothing fancy, just done well.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Free coffee in the lobby year round, and our café on site serves espresso and soft serve in summer, and food trucks set up next door in summer. The village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, fish the Arkansas, or drive Independence Pass to Aspen in summer. In winter you're close to Ski Cooper, Copper, Monarch, and Vail. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions.",
     guests: 2,
     bedrooms: 1,
     beds: 1,
@@ -510,8 +510,8 @@ export const rooms = [
         icon: 'ri-home-line'
       },
       {
-        title: 'Coffee & soft serve',
-        description: 'Gourmet coffee and soft serve available on-site during season (May–October)',
+        title: 'Free coffee in the lobby',
+        description: 'Help yourself any time of year. Our café on site does espresso and soft serve in summer.',
         icon: 'ri-cup-line'
       }
     ],
@@ -551,7 +551,7 @@ export const rooms = [
     name: "Room 1",
     location: "Twin Lakes, Colorado",
     description: "A clean, comfortable room with a queen bed, private bath, and your own entrance. Our highest-rated room at 4.98 stars - simple, well done, and right where you want to be.",
-    longDescription: "Room 1 has everything you need for a great stay. Queen bed, private bathroom, your own exterior entrance, and lockbox check-in so you come and go without coordinating with anyone. It's our highest-rated room for a reason - people like that it's comfortable, well done, and right where you want to be.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Gourmet coffee and soft serve are available on-site during season (May–October), and food trucks set up next door in summer. The village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, fish the Arkansas, or drive Independence Pass to Aspen in summer. In winter you're close to Ski Cooper, Copper, Monarch, and Vail. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions and expect quiet vibes in spring and winter.",
+    longDescription: "Room 1 has everything you need for a great stay. Queen bed, private bathroom, your own exterior entrance, and lockbox check-in so you come and go without coordinating with anyone. It's our highest-rated room for a reason - people like that it's comfortable, well done, and right where you want to be.\n\nThe Roadhouse is the closest lodging to Twin Lakes and the Mt. Elbert trailhead. Free coffee in the lobby year round, and our café on site serves espresso and soft serve in summer, and food trucks set up next door in summer. The village has an art gallery and gift shop within walking distance (summer/fall).\n\nFrom here you can kayak or paddleboard on the lake, hike fourteeners, fish the Arkansas, or drive Independence Pass to Aspen in summer. In winter you're close to Ski Cooper, Copper, Monarch, and Vail. Leadville and Buena Vista are each about 20-25 minutes away.\n\nPlease note: Independence Pass closes roughly December through May depending on weather. Check CDOT for road conditions and expect quiet vibes in spring and winter.",
     guests: 2,
     bedrooms: 1,
     beds: 1,
@@ -573,8 +573,8 @@ export const rooms = [
         icon: 'ri-drop-line'
       },
       {
-        title: 'Coffee & soft serve',
-        description: 'Gourmet coffee and soft serve available on-site during season (May–October)',
+        title: 'Free coffee in the lobby',
+        description: 'Help yourself any time of year. Our café on site does espresso and soft serve in summer.',
         icon: 'ri-cup-line'
       }
     ],
@@ -601,7 +601,7 @@ export const rooms = [
       "Basic toiletries provided",
       "Hair dryer",
       "Closet space",
-      "Gourmet coffee on-site (seasonal)",
+      "Free lobby coffee, café on site in summer",
       "Soft serve on-site (seasonal)",
       "Smoke alarm",
       "Carbon monoxide alarm",

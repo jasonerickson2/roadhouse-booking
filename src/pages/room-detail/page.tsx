@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { rooms } from '../../mocks/rooms';
 import Footer from '../../components/feature/Footer';
 import RangeCalendar from '../../components/base/RangeCalendar';
+import Lightbox from '../../components/base/Lightbox';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
 import { fetchAddOnOffer, type AddOnOffer } from '../../services/availability';
 import { addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
@@ -21,6 +22,7 @@ export default function RoomDetailPage() {
   const { calendars } = useCalendars([roomId]);
   const cal = calendars[roomId];
   const [showCal, setShowCal] = useState(false);
+  const [photo, setPhoto] = useState<number | null>(null);
   const [moreDesc, setMoreDesc] = useState(false);
   const [allAms, setAllAms] = useState(false);
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
@@ -87,8 +89,9 @@ export default function RoomDetailPage() {
     <>
       <div className="wrap">
         <Link className="back" to={`/?${writeSearch(search)}`}>‹ All rooms</Link>
-        <div style={{ position: 'relative' }}><div className="carousel">{mock.gallery.slice(0, 8).map((u, i) => <img key={u} src={u} alt={`${meta.short} photo ${i + 1}`} loading="lazy" />)}</div></div>
-        <div className="pgrid"><img className="big" src={mock.gallery[0]} alt={meta.short} />{mock.gallery.slice(1, 5).map((u, i) => <img key={u} src={u} alt={`${meta.short} photo ${i + 2}`} />)}</div>
+        <div style={{ position: 'relative' }}><div className="carousel">{mock.gallery.map((u, i) => <img key={u} src={u} alt={`${meta.short} photo ${i + 1}`} loading={i < 2 ? 'eager' : 'lazy'} onClick={() => setPhoto(i)} />)}</div><button className="allphotos mobile-only" onClick={() => setPhoto(0)}>All {mock.gallery.length} photos</button></div>
+        <div className="pgrid"><img className="big" src={mock.gallery[0]} alt={meta.short} onClick={() => setPhoto(0)} />{mock.gallery.slice(1, 5).map((u, i) => <img key={u} src={u} alt={`${meta.short} photo ${i + 2}`} onClick={() => setPhoto(i + 1)} />)}<button className="allphotos" onClick={() => setPhoto(0)}>All {mock.gallery.length} photos</button></div>
+        {photo !== null && <Lightbox photos={mock.gallery} start={photo} alt={meta.short} onClose={() => setPhoto(null)} />}
         <div className="room">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             <div><h1>{meta.short}</h1><div className="specs" style={{ marginTop: 6 }}><span><b style={{ color: 'var(--brass)' }}>★</b> {mock.rating.toFixed(2)} ({mock.reviews} reviews)</span><span>{meta.kind}</span><span>Sleeps {meta.sleeps}</span><span>{mock.bedrooms} bedroom{mock.bedrooms > 1 ? 's' : ''}</span><span>{mock.bathrooms} bath</span></div></div>
