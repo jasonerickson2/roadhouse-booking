@@ -64,9 +64,14 @@ export function writeSearch(s: SearchState, extra: Record<string, string> = {}):
 }
 
 // ---- cancellation policy (same rules as booking-api and direct-booking-settle) ----
+// Summer runs from the Saturday of Memorial Day weekend through October 31, computed per year the
+// same way booking-api does, so the label the guest sees is the one the server enforces.
 export function season(d: Date): 'summer' | 'winter' {
-  const m = d.getMonth(), day = d.getDate();
-  return ((m > 4 || (m === 4 && day >= 22)) && m <= 9) ? 'summer' : 'winter';
+  const y = d.getFullYear();
+  const memorialDay = new Date(y, 4, 31); memorialDay.setDate(31 - memorialDay.getDay() + 1); // last Monday of May
+  const start = new Date(memorialDay); start.setDate(memorialDay.getDate() - 2);
+  const end = new Date(y, 9, 31, 23, 59, 59);
+  return d >= start && d <= end ? 'summer' : 'winter';
 }
 export function policy(d: Date) {
   return season(d) === 'summer'
