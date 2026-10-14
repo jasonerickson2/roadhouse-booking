@@ -85,7 +85,7 @@ export default function HomePage() {
         <div className="txt">
           <span className="eyebrow">Twin Lakes, Colorado</span>
           <h1>A small lodge with the lake across the road.</h1>
-          <p>Rooms above our café in Twin Lakes village, and a whole house ten minutes up the mountain. Lowest rate when you book direct.</p>
+          <p>Rooms at the lodge in Twin Lakes village, café on site, and a whole house ten minutes up the mountain. Lowest rate when you book direct.</p>
         </div>
       </section>
 
@@ -105,7 +105,7 @@ export default function HomePage() {
 
       <section className="wrap"><div className="trust">
         <div><strong>Owner operated</strong><span>Lowest rate direct, no platform fees.</span></div>
-        <div><strong>Café downstairs</strong><span>Summer Wed to Sun. Free lobby coffee year round.</span></div>
+        <div><strong>Café on site</strong><span>Summer Wed to Sun. Free lobby coffee year round.</span></div>
         <div><strong>Self check in</strong><span>Door code by text at 4pm the day before.</span></div>
       </div></section>
 
