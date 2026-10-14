@@ -81,11 +81,12 @@ const BOOKING_API_BASE = import.meta.env.VITE_BOOKING_API_BASE;
 function isProdOrigin(): boolean {
   const origin = window.location.origin;
   return (
-    origin === 'https://onlinebooking.roadhousetwinlakes.com' ||
+    origin === 'https://roadhouse.milehigh.systems' ||
     origin === 'https://roadhousetwinlakes.com' ||
     origin === 'https://www.roadhousetwinlakes.com' ||
-    origin.includes('netlify.app') ||
-    origin.includes('localhost')
+    origin === 'https://roadhouse-booking.netlify.app' ||
+    /^https:\/\/deploy-preview-\d+--roadhouse-booking\.netlify\.app$/.test(origin) ||
+    origin.startsWith('http://localhost')
   );
 }
 
@@ -150,7 +151,7 @@ export class AvailabilityService {
     // Check if running on production origin
     if (!isProdOrigin()) {
       console.warn('⚠️ Preview mode detected - using mock availability data');
-      console.warn('💡 Live availability only works on published site: roadhousetwinlakes.com');
+      console.warn('💡 Live availability only works on the published site: roadhouse.milehigh.systems');
       
       // Return mock data for preview - simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -282,4 +283,19 @@ export async function fetchRoomCalendar(roomId: number): Promise<RoomCalendar> {
     console.error('fetchRoomCalendar failed:', e);
     return empty;
   }
+}
+
+// Which add ons booking-api will accept for this stay (lodge wide daily budget, turnover rule).
+// Until booking-api v37 is live the endpoint does not exist; treat any failure as "offer both" so
+// the server stays the final judge at /authorize.
+export interface AddOnOffer { early: boolean; late: boolean; fee: number }
+export async function fetchAddOnOffer(roomId: number, checkIn: string, checkOut: string): Promise<AddOnOffer> {
+  const open = { early: true, late: true, fee: 0 };
+  if (!isProdOrigin()) return open;
+  try {
+    const res = await fetch(`${BOOKING_API_BASE}/addons?roomId=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
+    if (!res.ok) return open;
+    const d = await res.json();
+    return { early: d.early !== false, late: d.late !== false, fee: Number(d.fee) || 0 };
+  } catch { return open; }
 }
