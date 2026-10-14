@@ -59,17 +59,18 @@ export default function HomePage() {
   function Card({ meta, wideCard }: { meta: StayMeta; wideCard?: boolean }) {
     const mock = roomMock(meta.id); const st = stayStatus(meta, search, byId(meta.id), loading); const total = cardTotal(meta);
     const r = byId(meta.id); const nightly = r?.pricing?.nightlyPrices?.length ? Math.min(...r.pricing.nightlyPrices) : mock.price;
-    const spec = `Sleeps ${meta.sleeps} · ${mock.bedTypes.map(b => b.beds).join(', ')} · ${mock.bathrooms} bath${meta.season ? ' · ' + meta.season : ''}`;
+    const bedsText = mock.bedTypes.length > 2 ? `${mock.beds} beds` : mock.bedTypes.map(b => b.beds).join(', ');
+    const spec = `Sleeps ${meta.sleeps} · ${bedsText} · ${mock.bathrooms} bath${meta.season ? ' · ' + meta.season : ''}`;
     let line: React.ReactNode, badge: React.ReactNode = meta.tag ? <span className="badge">{meta.tag}</span> : null;
     if (st === 'loading') line = <span className="spec">Checking price…</span>;
     else if (st === 'fits') line = <><span className="price"><b>{fmt(total)}</b> <span className="spec">total, {nights} night{nights > 1 ? 's' : ''}, fees and tax in</span></span><span className="ok">Open for your dates</span></>;
-    else if (st === 'booked') { badge = <span className="badge gray">Booked for these dates</span>; line = <><span className="price"><b>{fmt(nightly)}</b> <span className="spec">a night</span></span><span className="no">Tap to see open dates</span></>; }
+    else if (st === 'booked') { badge = <span className="badge gray">Booked for these dates</span>; line = <><span className="price"><span className="spec">from</span> <b>{fmt(nightly)}</b> <span className="spec">a night</span></span><span className="no">Tap to see open dates</span></>; }
     else line = <><span className="price"><b>{fmt(nightly)}</b> <span className="spec">a night{meta.minNights > 1 ? `, ${meta.minNights} night minimum` : ''}</span></span><span className="no">{st === 'guests' ? `Sleeps up to ${meta.sleeps}` : `${meta.minNights} night minimum`}</span></>;
     return (
       <Link className={'card' + (st === 'booked' ? ' booked' : '')} to={`/room/${meta.id}?${writeSearch(search)}`} style={wideCard ? { gridColumn: '1 / -1', maxWidth: 720, width: '100%', margin: '0 auto' } : undefined}>
         <img src={mock.image} alt={meta.short} loading="lazy" />{badge}
         <div className="body">
-          <div className="row"><span className="name">{meta.short}</span><span className="rating"><b>★</b> {mock.rating.toFixed(2)} · {mock.reviews}</span></div>
+          <div className="row"><span className="name">{meta.short}</span><span className="rating"><b>★</b> {mock.rating.toFixed(2)} · {mock.reviews} reviews</span></div>
           <span className="spec">{spec}</span>{line}
         </div>
       </Link>
