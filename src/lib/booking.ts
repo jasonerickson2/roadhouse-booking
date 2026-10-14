@@ -15,26 +15,27 @@ export interface StayMeta {
   minNights: number;
   petFee: number;          // per stay
   maxPets: number;
-  earlyFeePerHour: number; // early check in, up to 2 hours (2pm)
-  lateFeePerHour: number;  // late checkout, 1 hour (11am)
+  addOnFee: number;        // flat fee for early check in (2pm) or late checkout (11:30am). 0 = not offered
+  addOnWeight: number;     // share of the lodge wide daily budget (ADDON_BUDGET_PER_DAY) this room uses
   tag?: string;
   season?: string;
 }
 
 export const STAY_META: StayMeta[] = [
-  { id: 6, slug: 'room-1', name: 'Room 1', short: 'Room 1', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, earlyFeePerHour: 15, lateFeePerHour: 15, tag: 'Guest favorite' },
-  { id: 5, slug: 'room-2', name: 'Room 2', short: 'Room 2', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, earlyFeePerHour: 15, lateFeePerHour: 15 },
-  { id: 4, slug: 'room-3', name: 'Room 3', short: 'Room 3', kind: 'Lodge room', group: 'rooms', sleeps: 4, minNights: 1, petFee: 95, maxPets: 2, earlyFeePerHour: 15, lateFeePerHour: 15 },
-  { id: 2, slug: 'penthouse', name: 'Penthouse', short: 'Penthouse', kind: 'Entire apartment', group: 'suites', sleeps: 4, minNights: 1, petFee: 125, maxPets: 2, earlyFeePerHour: 25, lateFeePerHour: 25 },
-  { id: 3, slug: 'carriage-house', name: 'Cabin 5 - The Carriage House', short: 'Carriage House', kind: 'Standalone suite', group: 'suites', sleeps: 2, minNights: 2, petFee: 125, maxPets: 2, earlyFeePerHour: 25, lateFeePerHour: 25, tag: 'Guest favorite', season: 'May to Oct' },
-  { id: 1, slug: 'grizzly-maze', name: 'The Grizzly Maze', short: 'The Grizzly Maze', kind: 'Whole house', group: 'house', sleeps: 8, minNights: 3, petFee: 185, maxPets: 2, earlyFeePerHour: 40, lateFeePerHour: 40, tag: 'Whole house' },
+  { id: 6, slug: 'room-1', name: 'Room 1', short: 'Room 1', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite' },
+  { id: 5, slug: 'room-2', name: 'Room 2', short: 'Room 2', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1 },
+  { id: 4, slug: 'room-3', name: 'Room 3', short: 'Room 3', kind: 'Lodge room', group: 'rooms', sleeps: 4, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1 },
+  { id: 2, slug: 'penthouse', name: 'Penthouse', short: 'Penthouse', kind: 'Entire apartment', group: 'suites', sleeps: 4, minNights: 1, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 2 },
+  { id: 3, slug: 'carriage-house', name: 'Cabin 5 - The Carriage House', short: 'Carriage House', kind: 'Standalone suite', group: 'suites', sleeps: 2, minNights: 2, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', season: 'May to Oct' },
+  { id: 1, slug: 'grizzly-maze', name: 'The Grizzly Maze', short: 'The Grizzly Maze', kind: 'Whole house', group: 'house', sleeps: 8, minNights: 3, petFee: 185, maxPets: 2, addOnFee: 0, addOnWeight: 0, tag: 'Whole house' },
 ];
 
 export const metaById = (id: number) => STAY_META.find(s => s.id === id);
 
-// Lodge wide caps for add ons. The server should enforce these too (BUILD_NOTES.md).
-export const EARLY_CAP_PER_DAY = 1;
-export const LATE_CAP_PER_DAY = 2;
+// Lodge wide budget for add ons (owner, 2026-10-14): two early check ins or late checkouts a day in
+// any mix, the Penthouse counts as two, Grizzly offers none. The server (booking-api) enforces it.
+export const ADDON_BUDGET_PER_DAY = 2;
+export const EARLY_LABEL = '2pm', LATE_LABEL = '11:30am';
 
 // ---- dates ----
 export const today = () => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; };
@@ -77,12 +78,12 @@ export function policy(d: Date) {
 export const TAX_RATE = 0.029 + 0.04 + 0.019; // CO state, Lake County, lodging
 export const SERVICE_RATE = 0.02;
 
-export interface Extras { pets: number; earlyHours: 0 | 1 | 2; late: boolean; }
+export interface Extras { pets: number; earlyHours: 0 | 2; late: boolean; }
 
 export function extrasTotal(meta: StayMeta, x: Extras) {
   const pet = x.pets > 0 ? meta.petFee : 0;
-  const early = x.earlyHours * meta.earlyFeePerHour;
-  const late = x.late ? meta.lateFeePerHour : 0;
+  const early = x.earlyHours > 0 && meta.addOnFee > 0 ? meta.addOnFee : 0;
+  const late = x.late && meta.addOnFee > 0 ? meta.addOnFee : 0;
   const sub = pet + early + late;
   const tax = sub * TAX_RATE, fee = sub * SERVICE_RATE;
   return { pet, early, late, sub, tax, fee, total: sub + tax + fee };
@@ -90,7 +91,7 @@ export function extrasTotal(meta: StayMeta, x: Extras) {
 export function extrasNote(meta: StayMeta, x: Extras) {
   const parts: string[] = [];
   if (x.pets > 0) parts.push(`${x.pets} pet${x.pets > 1 ? 's' : ''} (${fmt(meta.petFee)})`);
-  if (x.earlyHours > 0) parts.push(`Early check in ${x.earlyHours === 2 ? '2pm' : '3pm'} (${fmt(x.earlyHours * meta.earlyFeePerHour)})`);
-  if (x.late) parts.push(`Late checkout 11am (${fmt(meta.lateFeePerHour)})`);
+  if (x.earlyHours > 0 && meta.addOnFee > 0) parts.push(`Early check in ${EARLY_LABEL} (${fmt(meta.addOnFee)})`);
+  if (x.late && meta.addOnFee > 0) parts.push(`Late checkout ${LATE_LABEL} (${fmt(meta.addOnFee)})`);
   return parts.join(', ');
 }

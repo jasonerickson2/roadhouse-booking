@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { rooms } from '../../mocks/rooms';
 import { AvailabilityService } from '../../services/availability';
 import Footer from '../../components/feature/Footer';
-import { extrasNote, extrasTotal, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras } from '../../lib/booking';
+import { extrasNote, extrasTotal, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
 
 // Room to Hostex Property ID mapping
 const ROOM_HOSTEX_MAP: Record<number, number> = {
@@ -66,7 +66,7 @@ export default function BookingFlowPage() {
   // Shared search state and add ons from the URL (pets, early, late)
   const search = readSearch(searchParams);
   const meta = room ? metaById(room.id) : undefined;
-  const earlyHours = (Math.min(2, Math.max(0, parseInt(searchParams.get('early') || '0') || 0))) as 0 | 1 | 2;
+  const earlyHours = (parseInt(searchParams.get('early') || '0') ? 2 : 0) as 0 | 2;
   const late = searchParams.get('late') === '1';
   const extras: Extras = { pets: search.pets, earlyHours, late };
   const ex = meta ? extrasTotal(meta, extras) : { pet: 0, early: 0, late: 0, sub: 0, tax: 0, fee: 0, total: 0 };
@@ -490,7 +490,7 @@ export default function BookingFlowPage() {
 
   const backTo = `/room/${room.id}?${writeSearch(search, { early: String(earlyHours), late: late ? '1' : '0' })}`;
   const canSubmit = policyAcknowledged && storeCard && !isProcessingPayment && !!pricingData;
-  const earlyLabel = earlyHours === 2 ? '2pm' : '3pm';
+  const earlyLabel = EARLY_LABEL;
   const stayLine = `${nice(search.checkIn)} to ${nice(search.checkOut)} · ${nights} night${nights > 1 ? 's' : ''} · ${search.guests} guest${search.guests > 1 ? 's' : ''}${search.pets ? ` · ${search.pets} pet${search.pets > 1 ? 's' : ''}` : ''}`;
 
   // Confirmation
@@ -505,7 +505,7 @@ export default function BookingFlowPage() {
             <div className="steps">
               <div><i>1</i><span><b>Within the hour:</b> we confirm by text and email and the hold becomes your payment. If we cannot host you the hold is released the same day.</span></div>
               <div><i>2</i><span><b>4pm the day before check in:</b> your door code, parking and directions arrive by text and email.</span></div>
-              <div><i>3</i><span><b>Check in from {earlyHours > 0 ? earlyLabel : '4pm'}.</b> Let yourself in. Checkout by {late ? '11am' : '10am'}.</span></div>
+              <div><i>3</i><span><b>Check in from {earlyHours > 0 ? earlyLabel : '4pm'}.</b> Let yourself in. Checkout by {late ? LATE_LABEL : '10am'}.</span></div>
             </div>
             <span className="fine">Request {confirmationData.bookingId}. Questions? Call <a href="tel:+17192252364">719 225 2364</a>.</span>
             <Link className="btn btn-line" to="/">Back to the lodge</Link>
@@ -528,7 +528,7 @@ export default function BookingFlowPage() {
                 <b style={{ fontFamily: "'Playfair Display',serif", fontSize: 18 }}>{roomName}</b>
                 <span>{stayLine}</span>
                 {ex.early > 0 && <span>Early check in {earlyLabel}</span>}
-                {ex.late > 0 && <span>Late checkout 11am</span>}
+                {ex.late > 0 && <span>Late checkout {LATE_LABEL}</span>}
               </div>
             </div>
 
@@ -543,7 +543,7 @@ export default function BookingFlowPage() {
                   <div className="line"><span>Cleaning</span><span>{usd(cleaningFee)}</span></div>
                   {ex.pet > 0 && <div className="line"><span>Pet fee, per stay</span><span>{usd(ex.pet)}</span></div>}
                   {ex.early > 0 && <div className="line"><span>Early check in, {earlyLabel}</span><span>{usd(ex.early)}</span></div>}
-                  {ex.late > 0 && <div className="line"><span>Late checkout, 11am</span><span>{usd(ex.late)}</span></div>}
+                  {ex.late > 0 && <div className="line"><span>Late checkout, {LATE_LABEL}</span><span>{usd(ex.late)}</span></div>}
                   <div className="line"><span>Taxes and processing</span><span>{usd(taxesAndProcessing)}</span></div>
                   <div className="tot"><span>Total</span><span>{usd(grandTotal)}</span></div>
                 </>

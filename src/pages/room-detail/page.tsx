@@ -4,7 +4,8 @@ import { rooms } from '../../mocks/rooms';
 import Footer from '../../components/feature/Footer';
 import RangeCalendar from '../../components/base/RangeCalendar';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
-import { addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState } from '../../lib/booking';
+import { fetchAddOnOffer, type AddOnOffer } from '../../services/availability';
+import { addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
 import { stayStatus } from '../home/page';
 
 export default function RoomDetailPage() {
@@ -23,8 +24,10 @@ export default function RoomDetailPage() {
   const [moreDesc, setMoreDesc] = useState(false);
   const [allAms, setAllAms] = useState(false);
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
-  const earlyHours = (parseInt(params.get('early') || '0') || 0) as 0 | 1 | 2;
+  const earlyHours = (parseInt(params.get('early') || '0') ? 2 : 0) as 0 | 2;
   const late = params.get('late') === '1';
+  const [offer, setOffer] = useState<AddOnOffer>({ early: true, late: true, fee: 0 });
+  useEffect(() => { let on = true; fetchAddOnOffer(roomId, key(search.checkIn), key(search.checkOut)).then(o => { if (on) setOffer(o); }); return () => { on = false; }; }, [roomId, key(search.checkIn), key(search.checkOut)]);
   useEffect(() => { const f = () => setWide(window.innerWidth >= 700); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f); }, []);
 
   if (!meta || !mock) return <div className="wrap" style={{ padding: 40 }}><p>Room not found.</p><Link to="/">All rooms</Link></div>;
@@ -35,9 +38,11 @@ export default function RoomDetailPage() {
   const setExtra = (e: Partial<Extras>) => update({}, { early: String(e.earlyHours ?? earlyHours), late: (e.late ?? late) ? '1' : '0' });
 
   // Early check in needs the room empty the night before; late checkout needs no arrival the checkout night.
-  const earlyAllowed = !!cal && addDays(search.checkIn, -1) >= new Date(new Date().setHours(0, 0, 0, 0)) && !cal.blockedDates.has(key(addDays(search.checkIn, -1)));
-  const lateAllowed = !!cal && !cal.blockedDates.has(key(search.checkOut));
-  const x: Extras = { pets: search.pets, earlyHours: earlyAllowed ? earlyHours : 0, late: lateAllowed && late };
+  // The lodge wide daily budget and the turnover rule come from booking-api (/addons); a full day hides the box.
+  const earlyAllowed = offer.early && !!cal && addDays(search.checkIn, -1) >= new Date(new Date().setHours(0, 0, 0, 0)) && !cal.blockedDates.has(key(addDays(search.checkIn, -1)));
+  const lateAllowed = offer.late && !!cal && !cal.blockedDates.has(key(search.checkOut));
+  const offered = meta.addOnFee > 0;
+  const x: Extras = { pets: search.pets, earlyHours: offered && earlyAllowed ? earlyHours : 0, late: offered && lateAllowed && late };
   const ex = extrasTotal(meta, x);
   const p = r?.pricing;
   const total = (p?.totalAmount || 0) + ex.total;
@@ -57,12 +62,11 @@ export default function RoomDetailPage() {
         <div className="line"><span>{fmt((p?.baseRate || 0) / Math.max(1, nights))} × {nights} night{nights > 1 ? 's' : ''}</span><span>{fmt(p?.baseRate || 0)}</span></div>
         <div className="line"><span>Cleaning</span><span>{fmt(p?.cleaningFee || 0)}</span></div>
         {ex.pet > 0 && <div className="line"><span>Pet fee, per stay</span><span>{fmt(ex.pet)}</span></div>}
-        {(earlyAllowed || lateAllowed) && <div className="fine" style={{ marginTop: 4 }}>Add ons for this stay</div>}
-        {earlyAllowed && <div className="addon"><label><input type="checkbox" checked={x.earlyHours > 0} onChange={e => setExtra({ earlyHours: e.target.checked ? 2 : 0 })} /><span>Early check in<small>{fmt(meta.earlyFeePerHour)} an hour, up to 2 hours</small></span></label>
-          <select disabled={x.earlyHours === 0} value={x.earlyHours || 2} onChange={e => setExtra({ earlyHours: parseInt(e.target.value) as 1 | 2 })} style={{ height: 36, border: '1px solid var(--line)', borderRadius: 8, font: 'inherit', background: '#fff' }}><option value={1}>3pm</option><option value={2}>2pm</option></select></div>}
-        {lateAllowed && <div className="addon"><label><input type="checkbox" checked={x.late} onChange={e => setExtra({ late: e.target.checked })} /><span>Late checkout, 11am<small>{fmt(meta.lateFeePerHour)}, 1 hour</small></span></label><b>{fmt(meta.lateFeePerHour)}</b></div>}
-        {ex.early > 0 && <div className="line"><span>Early check in, {x.earlyHours === 2 ? '2pm' : '3pm'}</span><span>{fmt(ex.early)}</span></div>}
-        {ex.late > 0 && <div className="line"><span>Late checkout, 11am</span><span>{fmt(ex.late)}</span></div>}
+        {offered && (earlyAllowed || lateAllowed) && <div className="fine" style={{ marginTop: 4 }}>Add ons for this stay</div>}
+        {offered && earlyAllowed && <div className="addon"><label><input type="checkbox" checked={x.earlyHours > 0} onChange={e => setExtra({ earlyHours: e.target.checked ? 2 : 0 })} /><span>Early check in, {EARLY_LABEL}<small>Flat {fmt(meta.addOnFee)}</small></span></label><b>{fmt(meta.addOnFee)}</b></div>}
+        {offered && lateAllowed && <div className="addon"><label><input type="checkbox" checked={x.late} onChange={e => setExtra({ late: e.target.checked })} /><span>Late checkout, {LATE_LABEL}<small>Flat {fmt(meta.addOnFee)}</small></span></label><b>{fmt(meta.addOnFee)}</b></div>}
+        {ex.early > 0 && <div className="line"><span>Early check in, {EARLY_LABEL}</span><span>{fmt(ex.early)}</span></div>}
+        {ex.late > 0 && <div className="line"><span>Late checkout, {LATE_LABEL}</span><span>{fmt(ex.late)}</span></div>}
         <div className="line"><span>Taxes (8.8%) and processing (2%)</span><span>{fmt((p?.taxes || []).reduce((a, t) => a + t.amount, 0) + (p?.serviceFee || 0) + ex.tax + ex.fee)}</span></div>
         <div className="tot"><span>Total</span><span>{fmt(total)}</span></div>
         <Link className="btn btn-wood" to={reserveTo} style={{ width: '100%' }}>Reserve</Link>
@@ -92,7 +96,7 @@ export default function RoomDetailPage() {
             <div className="rule"><div className={'desc' + (moreDesc ? '' : ' clamp')}>{paras.map((t, i) => <p key={i} style={{ margin: '0 0 10px' }}>{t.replace(/^• /, '· ')}</p>)}</div><button className="more" type="button" onClick={() => setMoreDesc(m => !m)}>{moreDesc ? 'Show less' : 'Show more'}</button></div>
             <div className="rule"><h3>What you get</h3><div className="ams">{(allAms ? mock.amenities : mock.amenities.slice(0, 6)).map(a => <span key={a}>{a}</span>)}</div>{mock.amenities.length > 6 && !allAms && <button className="more" type="button" onClick={() => setAllAms(true)}>Show all {mock.amenities.length}</button>}</div>
             <div className="rule"><h3>Where you sleep</h3><ul className="list">{mock.bedTypes.map(b => <li key={b.bedroom}>{b.bedroom}: {b.beds}</li>)}</ul></div>
-            <div className="rule"><h3>Good to know</h3><ul className="list"><li>Self check in. Door code by text at 4pm the day before.</li><li>In from 4pm, out by 10am. Early and late add ons when the room is free.</li><li>Pets welcome, {fmt(meta.petFee)} per stay, up to {meta.maxPets}.</li>{rules.map(rl => <li key={rl}>{rl}</li>)}</ul></div>
+            <div className="rule"><h3>Good to know</h3><ul className="list"><li>Self check in. Door code by text at 4pm the day before.</li><li>In from 4pm, out by 10am.{offered ? ` Early check in (${EARLY_LABEL}) or late checkout (${LATE_LABEL}) for ${fmt(meta.addOnFee)} when the room is free.` : ''}</li><li>Pets welcome, {fmt(meta.petFee)} per stay, up to {meta.maxPets}.</li>{rules.map(rl => <li key={rl}>{rl}</li>)}</ul></div>
             <div className="rule" id="policy"><h3>Cancellation</h3><p style={{ margin: 0, fontSize: 14 }}>{pol.rules.slice(0, 3).join('. ')}. Full terms shown before you reserve.</p></div>
           </div>
           {wide && <div className="pcol">{priceBox}</div>}

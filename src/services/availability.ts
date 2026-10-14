@@ -284,3 +284,18 @@ export async function fetchRoomCalendar(roomId: number): Promise<RoomCalendar> {
     return empty;
   }
 }
+
+// Which add ons booking-api will accept for this stay (lodge wide daily budget, turnover rule).
+// Until booking-api v37 is live the endpoint does not exist; treat any failure as "offer both" so
+// the server stays the final judge at /authorize.
+export interface AddOnOffer { early: boolean; late: boolean; fee: number }
+export async function fetchAddOnOffer(roomId: number, checkIn: string, checkOut: string): Promise<AddOnOffer> {
+  const open = { early: true, late: true, fee: 0 };
+  if (!isProdOrigin()) return open;
+  try {
+    const res = await fetch(`${BOOKING_API_BASE}/addons?roomId=${roomId}&checkIn=${checkIn}&checkOut=${checkOut}`);
+    if (!res.ok) return open;
+    const d = await res.json();
+    return { early: d.early !== false, late: d.late !== false, fee: Number(d.fee) || 0 };
+  } catch { return open; }
+}
