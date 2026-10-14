@@ -14,7 +14,7 @@ export default function Footer() {
             <a href="https://www.instagram.com/roadhousetwinlakes" target="_blank" rel="noopener noreferrer">Instagram</a>
           </div>
           <div>
-            <strong>The Café</strong><br />Coffee, soft serve, breakfast.<br />Peak season daily, off season no set hours.<br />
+            <strong>The Café</strong><br />Coffee, soft serve, breakfast.<br />Summer: Wed and Thu 8 to 2, Fri to Sun 8 to 4.<br />Closed off season.<br />
             <a href="https://www.roadhousetwinlakes.com/about-5-1">Menu</a>
           </div>
           <div>

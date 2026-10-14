@@ -9,7 +9,11 @@ import { STAY_META, extrasTotal, fmt, nice, nightsBetween, readSearch, writeSear
 import type { RoomAvailability } from '../../services/availability';
 
 // Paste real guest reviews here: { text: 'quote', who: 'First name · Room 1 · Month year' }
-const REVIEWS: { text: string; who: string }[] = [];
+const REVIEWS: { text: string; who: string }[] = [
+  { text: 'Loved it! Right in the heart of the beautiful, funky Twin Lakes village. Fascinating mining and tourist history. Shana was great, and the lodge is just as described. Simple, clean, and down to earth.', who: 'Jane · Room 1 · June 2026' },
+  { text: "I truly can't overstate just how perfect and special this place is! The room itself was so cozy, clean, and beautiful, not to mention it's located in what has to be one of the most gorgeous towns in the entire country.", who: 'Carly · Penthouse · July 2026' },
+  { text: "Lovely spot! The owners have an amazing coffee shop right there and it's a short walk to the general store and to the lake. Great views, communicative hosts.", who: 'Martin · Carriage House · September 2026' },
+];
 
 const HERO = 'https://static.readdy.ai/image/2d0d20f832106674f714e5a5c924f53b/325666414111d5bf848a4c9ea0d70fd7.jpeg';
 
@@ -101,7 +105,7 @@ export default function HomePage() {
 
       <section className="wrap"><div className="trust">
         <div><strong>Owner operated</strong><span>Lowest rate direct, no platform fees.</span></div>
-        <div><strong>Café downstairs</strong><span>Open peak season. Free lobby coffee year round.</span></div>
+        <div><strong>Café downstairs</strong><span>Summer Wed to Sun. Free lobby coffee year round.</span></div>
         <div><strong>Self check in</strong><span>Door code by text at 4pm the day before.</span></div>
       </div></section>
 
