@@ -39,10 +39,11 @@ export default function RoomDetailPage() {
   const update = (patch: Partial<SearchState>, extra: Record<string, string> = {}) => setParams(writeSearch({ ...search, ...patch }, { early: String(earlyHours), late: late ? '1' : '0', ...extra }), { replace: true });
   const setExtra = (e: Partial<Extras>) => update({}, { early: String(e.earlyHours ?? earlyHours), late: (e.late ?? late) ? '1' : '0' });
 
-  // Early check in needs the room empty the night before; late checkout needs no arrival the checkout night.
-  // The lodge wide daily budget and the turnover rule come from booking-api (/addons); a full day hides the box.
-  const earlyAllowed = offer.early && !!cal && addDays(search.checkIn, -1) >= new Date(new Date().setHours(0, 0, 0, 0)) && !cal.blockedDates.has(key(addDays(search.checkIn, -1)));
-  const lateAllowed = offer.late && !!cal && !cal.blockedDates.has(key(search.checkOut));
+  // Owner rule 2026-10-14: add ons depend on the lodge wide daily budget (2 a day, Penthouse counts as 2)
+  // and the same room turnover rule, both answered by booking-api /addons. Whether the room was
+  // booked the night before or after does not matter; the cleaner has 10am to 2pm either way.
+  const earlyAllowed = offer.early && addDays(search.checkIn, 0) >= new Date(new Date().setHours(0, 0, 0, 0));
+  const lateAllowed = offer.late;
   const offered = meta.addOnFee > 0;
   const x: Extras = { pets: search.pets, earlyHours: offered && earlyAllowed ? earlyHours : 0, late: offered && lateAllowed && late };
   const ex = extrasTotal(meta, x);
