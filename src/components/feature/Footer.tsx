@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 export default function Footer() {
   return (
     <footer id="contact">
@@ -14,13 +15,13 @@ export default function Footer() {
             <a href="https://www.instagram.com/roadhousetwinlakes" target="_blank" rel="noopener noreferrer">Instagram</a>
           </div>
           <div>
-            <strong>The Café</strong><br />Coffee, soft serve, breakfast.<br />Summer: Wed and Thu 8 to 2, Fri to Sun 8 to 4.<br />Closed off season.<br />
+            <strong>The Café</strong><br />Coffee, soft serve, breakfast<br />Summer only<br />Wed, Thu 8 to 2 · Fri to Sun 8 to 4<br />
             <a href="https://www.roadhousetwinlakes.com/about-5-1">Menu</a>
           </div>
           <div>
             <strong>Good to know</strong><br />
-            <a href="#policy">Cancellation policy</a><br />
-            <a href="https://www.roadhousetwinlakes.com/blank-2">House rules</a><br />
+            <Link to="/cancellation-policy">Cancellation policy</Link><br />
+            <a href="https://www.roadhousetwinlakes.com/blank-2">About us</a><br />
             <a href="https://www.roadhousetwinlakes.com/about-3">Our recs</a>
           </div>
         </div>

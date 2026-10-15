@@ -6,6 +6,7 @@ const HomePage = lazy(() => import('../pages/home/page'));
 const BookingFlowPage = lazy(() => import('../pages/booking-flow/page'));
 const RoomDetailPage = lazy(() => import('../pages/room-detail/page'));
 const CancelPage = lazy(() => import('../pages/cancel/page'));
+const PolicyPage = lazy(() => import('../pages/policy/page'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 const routes: RouteObject[] = [
@@ -24,6 +25,10 @@ const routes: RouteObject[] = [
   {
     path: '/cancel/:token',
     element: <CancelPage />,
+  },
+  {
+    path: '/cancellation-policy',
+    element: <PolicyPage />,
   },
   {
     path: '*',
