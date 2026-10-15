@@ -128,7 +128,7 @@ export default function BookingFlowPage() {
       } catch (e) { console.log('Google Pay unavailable', e); }
       try {
         w.cashApp = await payments.cashAppPay(paymentRequest, { redirectURL: window.location.href, referenceId: `rh-${Date.now()}` });
-        await w.cashApp.attach('#cash-app-pay');
+        await w.cashApp.attach('#cash-app-pay', { shape: 'semiround', width: 'full' });
         w.cashApp.addEventListener('ontokenization', (ev: any) => {
           const t = ev?.detail?.tokenResult;
           if (t?.status === 'OK') submitTokenRef.current(t.token);
