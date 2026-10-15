@@ -228,4 +228,4 @@ body{padding-bottom:76px}
 .lb-count{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#fff;font-size:14px}
 @media (max-width:699px){.lb-nav{display:none}}
 
-.policy-page{max-width:720px;margin:32px auto;padding:0 16px}.policy-page h1{font-size:30px;margin:0 0 6px}.policy-page h2{font-size:18px;margin:26px 0 8px}.policy-page ul{padding-left:20px;margin:0}.policy-page li{margin:4px 0}.policy-page .now{display:inline-block;background:#E4E1D8;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;margin-left:8px;vertical-align:middle}
+.policy-page{max-width:720px;margin:40px auto;padding:0 16px;text-align:center}.policy-page h1{font-size:30px;margin:0 0 6px}.policy-page h2{font-size:18px;margin:26px 0 8px}.policy-page ul{list-style:none;padding:0;margin:0}.policy-page li{margin:4px 0}.policy-page .now{display:inline-block;background:#E4E1D8;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;margin-left:8px;vertical-align:middle}
