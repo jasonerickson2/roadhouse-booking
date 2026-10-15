@@ -5,7 +5,7 @@ import Footer from '../../components/feature/Footer';
 import RangeCalendar from '../../components/base/RangeCalendar';
 import AvailabilityGrid from '../../components/base/AvailabilityGrid';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
-import { STAY_META, extrasTotal, fmt, nice, nightsBetween, readSearch, writeSearch, type SearchState, type StayMeta } from '../../lib/booking';
+import { STAY_META, extrasTotal, fmt, nice, nightsBetween, readSearch, season, writeSearch, type SearchState, type StayMeta } from '../../lib/booking';
 import type { RoomAvailability } from '../../services/availability';
 
 // Paste real guest reviews here: { text: 'quote', who: 'First name · Room 1 · Month year' }
@@ -15,7 +15,7 @@ const REVIEWS: { text: string; who: string }[] = [
   { text: "Lovely spot! The owners have an amazing coffee shop right there and it's a short walk to the general store and to the lake. Great views, communicative hosts.", who: 'Martin · Carriage House · September 2026' },
 ];
 
-const HERO = 'https://static.readdy.ai/image/2d0d20f832106674f714e5a5c924f53b/325666414111d5bf848a4c9ea0d70fd7.jpeg';
+const HERO = season(new Date()) === 'winter' ? '/img/hero-winter.jpg' : '/img/hero-summer.jpg';
 
 type Status = 'fits' | 'booked' | 'guests' | 'min' | 'loading';
 
@@ -82,11 +82,11 @@ export default function HomePage() {
   return (
     <>
       <section className="hero" id="top">
-        <img src={HERO} alt="Twin Lakes under the Collegiate Peaks" /><div className="shade" />
+        <img src={HERO} alt="Twin Lakes below Mount Elbert" /><div className="shade" />
         <div className="txt">
           <span className="eyebrow">Twin Lakes, Colorado</span>
-          <h1>A small lodge with the lake across the road.</h1>
-          <p>Rooms at the lodge in Twin Lakes village, café on site, and a whole house ten minutes up the mountain. Lowest rate when you book direct.</p>
+          <h1>Colorado's largest glacial lakes. Its tallest peak. One historic lodge between them.</h1>
+          <p>Rooms in Twin Lakes village at the foot of Mount Elbert and Independence Pass. Café on site. Lowest rate when you book direct.</p>
         </div>
       </section>
 
