@@ -85,7 +85,7 @@ export default function HomePage() {
         <img src={HERO} alt="Twin Lakes below Mount Elbert" /><div className="shade" />
         <div className="txt">
           <span className="eyebrow">Twin Lakes, Colorado</span>
-          <h1>Colorado's largest glacial lakes. Its tallest peak. One historic lodge between them.</h1>
+          <h1>Colorado's largest glacial lakes. Its tallest peak. One lodge between them.</h1>
           <p>Rooms in Twin Lakes village at the foot of Mount Elbert and Independence Pass. Café on site. Lowest rate when you book direct.</p>
         </div>
       </section>
