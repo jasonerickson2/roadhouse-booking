@@ -264,6 +264,7 @@ export default function BookingFlowPage() {
   const guestGate = (): string | null => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) return 'Please fill in your name, email and phone first.';
     if (!policyAcknowledged) return 'Please agree to the cancellation policy and house rules first.';
+    if (!storeCard) return 'Please tick the card on file box first.';
     return null;
   };
   guestGateRef.current = guestGate;
@@ -444,7 +445,7 @@ export default function BookingFlowPage() {
 
   const handleApplePay = async () => {
     setPaymentError(null);
-    const gate = guestGate(); if (gate) { setPaymentError(gate); return; }
+    const gate = guestGate(); if (gate) { setPaymentError(gate); document.querySelector('input:invalid, .chk input:not(:checked)')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     try { const r = await wallets.applePay.tokenize(); if (r.status === 'OK') await submitToken(r.token); else setPaymentError(`Apple Pay didn't complete (${r.status}). Please try the card instead.`); }
     catch (e: any) { setPaymentError('Apple Pay error: ' + (e?.message || String(e))); }
   };
@@ -556,16 +557,6 @@ export default function BookingFlowPage() {
           </div>
 
           <form className="form" ref={formRef} onSubmit={handleFormSubmit}>
-            {wallets.applePay && (
-              <button type="button" className="btn btn-apple" onClick={handleApplePay} disabled={isProcessingPayment} aria-label="Pay with Apple Pay">
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M16.7 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.5-.2-2.8.8-3.6.8-.7 0-1.8-.8-3-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.4-1-2.4-3.6zM14.4 5.6c.6-.8 1.1-1.9.9-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3z"/></svg> Pay
-              </button>
-            )}
-            <div id="google-pay-button" />
-            <div id="cash-app-pay" />
-            {(wallets.applePay || wallets.googlePay || wallets.cashApp) && <span className="fine center">Fill in your details below, then pay with one tap.</span>}
-            <div className="or">or pay with card</div>
-
             <div className="two">
               <label>First name<input required name="firstName" autoComplete="given-name" placeholder="First" value={formData.firstName} onChange={handleInputChange} /></label>
               <label>Last name<input required name="lastName" autoComplete="family-name" placeholder="Last" value={formData.lastName} onChange={handleInputChange} /></label>
@@ -573,11 +564,6 @@ export default function BookingFlowPage() {
             <label>Email<input required type="email" name="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} /></label>
             <label>Phone, for your door code<input required type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="(303) 555 0100" value={formData.phone} onChange={handleInputChange} /></label>
             <label>Anything we should know<textarea name="specialRequests" placeholder="Arrival time, pets, questions" value={formData.specialRequests} onChange={handleInputChange} /></label>
-
-            <label>Card
-              <div id="card-container" style={{ minHeight: 46 }}></div>
-            </label>
-            {isInitializingSquare && <span className="fine">Loading the card form…</span>}
 
             <label className="chk">
               <input type="checkbox" required checked={policyAcknowledged} onChange={(e) => setPolicyAcknowledged(e.target.checked)} />
@@ -591,6 +577,20 @@ export default function BookingFlowPage() {
             {paymentError && (
               <div className="note" role="alert" style={{ background: '#F6E3DF', color: '#7A2E22' }}>{paymentError}</div>
             )}
+
+            {wallets.applePay && (
+              <button type="button" className="btn btn-apple" onClick={handleApplePay} disabled={isProcessingPayment} aria-label="Pay with Apple Pay">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M16.7 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.5-.2-2.8.8-3.6.8-.7 0-1.8-.8-3-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.4-1-2.4-3.6zM14.4 5.6c.6-.8 1.1-1.9.9-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3z"/></svg> Pay
+              </button>
+            )}
+            <div id="google-pay-button" />
+            <div id="cash-app-pay" />
+            {(wallets.applePay || wallets.googlePay || wallets.cashApp) && <div className="or">or pay with card</div>}
+
+            <label>Card
+              <div id="card-container" style={{ minHeight: 46 }}></div>
+            </label>
+            {isInitializingSquare && <span className="fine">Loading the card form…</span>}
 
             <button className="btn btn-wood" type="submit" style={{ width: '100%' }} disabled={!canSubmit}>
               {isProcessingPayment ? 'Placing hold…' : `Place hold for ${usd(grandTotal)}`}
