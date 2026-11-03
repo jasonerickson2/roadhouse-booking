@@ -5,8 +5,8 @@ import Footer from '../../components/feature/Footer';
 import RangeCalendar from '../../components/base/RangeCalendar';
 import AvailabilityGrid from '../../components/base/AvailabilityGrid';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
-import { STAY_META, extrasTotal, fmt, nice, nightsBetween, readSearch, season, writeSearch, type SearchState, type StayMeta } from '../../lib/booking';
-import type { RoomAvailability } from '../../services/availability';
+import { STAY_META, addDays, extrasTotal, fmt, key, nice, nightsBetween, readSearch, season, writeSearch, type SearchState, type StayMeta } from '../../lib/booking';
+import type { RoomAvailability, RoomCalendar } from '../../services/availability';
 
 // Paste real guest reviews here: { text: 'quote', who: 'First name · Room 1 · Month year' }
 const REVIEWS: { text: string; who: string }[] = [
@@ -19,9 +19,14 @@ const HERO = season(new Date()) === 'winter' ? '/img/hero-winter.jpg' : '/img/he
 
 type Status = 'fits' | 'booked' | 'guests' | 'min' | 'loading';
 
-export function stayStatus(meta: StayMeta, s: SearchState, r: RoomAvailability | undefined, loading: boolean): Status {
+export function stayStatus(meta: StayMeta, s: SearchState, r: RoomAvailability | undefined, loading: boolean, cal?: RoomCalendar): Status {
   if (loading || !r) return 'loading';
   if (!r.isAvailable) return 'booked';
+  // A Hostex block (seasonal close, owner hold) is not a reservation, so availability says open.
+  // The calendar knows. Any blocked night inside the stay means this room is not bookable.
+  if (cal && cal.blockedDates.size) {
+    for (let d = new Date(s.checkIn); d < s.checkOut; d = addDays(d, 1)) if (cal.blockedDates.has(key(d))) return 'booked';
+  }
   if (meta.sleeps < s.guests) return 'guests';
   if (nightsBetween(s.checkIn, s.checkOut) < meta.minNights) return 'min';
   return 'fits';
@@ -37,6 +42,14 @@ export default function HomePage() {
   const [calOpen, setCalOpen] = useState(false);
   const calRef = useRef<HTMLFormElement>(null);
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
+  // Nights no room can host: blocked on every calendar we have. Shown struck through in the search picker.
+  const allBlocked = (() => {
+    const cals = STAY_META.map(m => calendars[m.id]).filter((c): c is RoomCalendar => !!c);
+    if (cals.length < STAY_META.length) return undefined;
+    const out = new Set<string>();
+    for (const k of cals[0].blockedDates) if (cals.every(c => c.blockedDates.has(k))) out.add(k);
+    return out;
+  })();
 
   useEffect(() => {
     const onResize = () => setWide(window.innerWidth >= 700);
@@ -53,11 +66,11 @@ export default function HomePage() {
     const r = byId(meta.id); if (!r?.pricing) return 0;
     return r.pricing.totalAmount + extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false }).total;
   }
-  const openCount = STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading) === 'fits').length;
-  const cheapest = Math.min(...STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading) === 'fits').map(cardTotal));
+  const openCount = STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').length;
+  const cheapest = Math.min(...STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').map(cardTotal));
 
   function Card({ meta, wideCard }: { meta: StayMeta; wideCard?: boolean }) {
-    const mock = roomMock(meta.id); const st = stayStatus(meta, search, byId(meta.id), loading); const total = cardTotal(meta);
+    const mock = roomMock(meta.id); const st = stayStatus(meta, search, byId(meta.id), loading, calendars[meta.id]); const total = cardTotal(meta);
     const r = byId(meta.id); const nightly = r?.pricing?.nightlyPrices?.length ? Math.min(...r.pricing.nightlyPrices) : mock.price;
     const bedsText = mock.bedTypes.length > 2 ? `${mock.beds} beds` : mock.bedTypes.map(b => b.beds).join(', ');
     const spec = `Sleeps ${meta.sleeps} · ${bedsText} · ${mock.bathrooms} bath${meta.season ? ' · ' + meta.season : ''}`;
@@ -99,7 +112,7 @@ export default function HomePage() {
           <div className="field"><label htmlFor="pets">Pets</label>
             <select id="pets" value={search.pets} onChange={e => update({ pets: parseInt(e.target.value) })}><option value={0}>No pets</option><option value={1}>1 pet</option><option value={2}>2 pets</option></select></div>
           <button className="btn go" type="submit">Show prices</button>
-          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} months={wide ? 2 : 1} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setCalOpen(false); }} />}
+          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} months={wide ? 2 : 1} blocked={allBlocked} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setCalOpen(false); }} />}
         </form>
         <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} />
       </section>

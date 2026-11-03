@@ -239,6 +239,14 @@ export default function BookingFlowPage() {
     }
   }, [currentStep, pricingData]);
 
+  // MileHigh Recover: tell the pixel this visitor booked, so no recovery email goes out and
+  // any earlier recovery email gets credit. No-op when the pixel is not loaded or not consented.
+  useEffect(() => {
+    if (currentStep !== 'confirmation' || !confirmationData?.bookingId) return;
+    const w = window as unknown as { MHRecover?: { booked: (m: Record<string, unknown>) => void } };
+    w.MHRecover?.booked({ ref: String(confirmationData.bookingId), amount_cents: Math.round(grandTotal * 100) });
+  }, [currentStep, confirmationData]);
+
   if (!room || !checkIn || !checkOut) {
     return (
       <div className="wrap" style={{ padding: 40 }}>
