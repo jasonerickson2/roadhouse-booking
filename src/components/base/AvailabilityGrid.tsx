@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { STAY_META, addDays, key, nice, today } from '../../lib/booking';
+import { STAY_META, addDays, key, nice, nightsBetween, today } from '../../lib/booking';
 import type { RoomCalendar } from '../../services/availability';
 
 interface Props {
@@ -7,18 +7,19 @@ interface Props {
   checkIn: Date;
   checkOut: Date;
   loading?: boolean;
+  guests?: number;                                     // rooms that sleep fewer are dimmed
   onPick?: (roomId: number, date: Date) => void;       // tap an open night to start a stay there
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const money = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
 
 // Rooms by nights. Open nights show that room's nightly rate (Hostex, display only); booked nights are striped.
-export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading, onPick }: Props) {
+export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading, guests = 1, onPick }: Props) {
   const t = today();
-  const [weeks, setWeeks] = useState(3);
   const [offset, setOffset] = useState(0);
-  const span = weeks * 7;
+  const span = 21;
   const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
   const base = addDays(checkIn, -2) < t ? t : addDays(checkIn, -2);
   const start = addDays(base, offset);
@@ -30,6 +31,8 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
   for (const s of STAY_META) for (const d of days) { const k = key(d); const p = priceOf(s.id, k); if (p && !isBooked(s.id, k)) openPrices.push(p); }
   const lowest = openPrices.length ? Math.min(...openPrices) : null;
   const canBack = offset > 0 && start > t;
+  const stayNights: string[] = [];
+  for (let d = new Date(checkIn); d < checkOut; d = addDays(d, 1)) stayNights.push(key(d));
 
   return (
     <div className="ag">
@@ -39,8 +42,6 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
           <p>Nightly rates, book direct. Tap an open night to start a stay there.</p>
         </div>
         <div className="ag-ctl">
-          <button type="button" className={weeks === 3 ? 'on' : ''} onClick={() => setWeeks(3)}>3 weeks</button>
-          <button type="button" className={weeks === 6 ? 'on' : ''} onClick={() => setWeeks(6)}>6 weeks</button>
           <button type="button" className="arw" disabled={!canBack} onClick={() => setOffset(o => Math.max(0, o - span))} aria-label="Earlier dates">‹</button>
           <button type="button" className="arw" onClick={() => setOffset(o => o + span)} aria-label="Later dates">›</button>
         </div>
@@ -48,22 +49,27 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
       <div className="ag-scroll">
         <div className="ag-grid" style={{ gridTemplateColumns: `${narrow ? 112 : 140}px repeat(${span}, minmax(${narrow ? 52 : 40}px, 1fr))` }}>
           <div className="ag-corner" />
-          {days.map(d => {
+          {days.map((d, i) => {
             const w = d.getDay(); const isToday = key(d) === key(t);
-            return <div key={key(d)} className={'ag-day' + (w === 5 || w === 6 ? ' we' : '') + (isToday ? ' today' : '')}>
-              <span>{DOW[w]}</span><b>{d.getDate()}</b>
+            const inStay = d >= checkIn && d < checkOut;
+            const showMonth = i === 0 || d.getDate() === 1;
+            return <div key={key(d)} className={'ag-day' + (w === 5 || w === 6 ? ' we' : '') + (isToday ? ' today' : '') + (inStay ? ' stay' : '') + (d.getDate() === 1 && i > 0 ? ' m1' : '')}>
+              <em>{showMonth ? MON[d.getMonth()] : '\u00a0'}</em><span>{DOW[w]}</span><b>{d.getDate()}</b>
             </div>;
           })}
           {STAY_META.map(s => {
             const known = !!calendars[s.id];
+            const small = s.sleeps < guests;
+            // Highlight the stay only on rooms that can actually take it: every night open, minimum met, sleeps enough.
+            const fits = known && !small && nightsBetween(checkIn, checkOut) >= s.minNights && !stayNights.some(k => isBooked(s.id, k));
             return [
-              <div className="ag-room" key={'n' + s.id}>{s.short.replace('The ', '')}<small>Sleeps {s.sleeps}{s.minNights > 1 ? ` · ${s.minNights} night min` : ''}</small></div>,
+              <div className={'ag-room' + (small ? ' dim' : '')} key={'n' + s.id}>{s.short.replace('The ', '')}<small>{small ? `Too small for ${guests}` : `Sleeps ${s.sleeps}${s.minNights > 1 ? ` · ${s.minNights} night min` : ''}`}</small></div>,
               ...days.map(d => {
                 const k = key(d); const b = isBooked(s.id, k); const p = priceOf(s.id, k);
-                const sel = d >= checkIn && d < checkOut;
-                const cls = 'ag-c' + (!known ? ' unk' : b ? ' b' : '') + (sel && !b ? ' sel' : '') + (!b && p && p === lowest && !sel ? ' low' : '');
+                const sel = fits && d >= checkIn && d < checkOut;
+                const cls = 'ag-c' + (!known ? ' unk' : b ? ' b' : '') + (small ? ' dim' : '') + (sel && !b ? ' sel' : '') + (!b && p && p === lowest && !sel ? ' low' : '');
                 const label = `${s.short.replace('The ', '')}, ${nice(d)}, ${!known ? 'loading' : b ? 'booked' : p ? money(p) + ' per night' : 'open'}`;
-                return (!known || b)
+                return (!known || b || small)
                   ? <div key={s.id + k} className={cls} title={label} aria-label={label} />
                   : <button type="button" key={s.id + k} className={cls} title={label} aria-label={label} onClick={() => onPick?.(s.id, d)}>{p ? money(p) : ''}</button>;
               }),
@@ -74,7 +80,7 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
       <div className="ag-legend">
         <span><i className="k-open" />Open, price per night</span>
         <span><i className="k-booked" />Booked</span>
-        <span><i className="k-sel" />Your dates</span>
+        <span><i className="k-sel" />Your dates, rooms that fit</span>
         {lowest && <span><b>{money(lowest)}</b> lowest rate</span>}
         {loading && <span>Checking the calendar…</span>}
       </div>

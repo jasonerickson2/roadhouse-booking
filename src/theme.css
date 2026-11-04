@@ -334,3 +334,9 @@ button.ag-c:hover{outline:2px solid var(--ink);outline-offset:-2px}
  .ag-room{font-size:12px}
  .ag-room small{font-size:10.5px}
 }
+
+.ag-day em{font-style:normal;font-size:11px;font-weight:700;color:var(--brass);text-transform:uppercase;letter-spacing:.5px;height:14px}
+.ag-day.m1{border-left:2px solid var(--line)}
+.ag-day.stay{background:var(--sage);border-radius:10px 10px 0 0}
+.ag-room.dim{opacity:.45}
+.ag-c.dim{opacity:.35}

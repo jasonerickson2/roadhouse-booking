@@ -43,15 +43,6 @@ export default function HomePage() {
   const calRef = useRef<HTMLFormElement>(null);
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
   // Nights no room can host: blocked on every calendar we have. Shown struck through in the search picker.
-  // Lowest open nightly rate per date across rooms, for the date picker (display only, Hostex rates).
-  const lowestNightly = (() => {
-    const out: Record<string, number> = {};
-    for (const m of STAY_META) {
-      const c = calendars[m.id]; if (!c) continue;
-      for (const [d, p] of Object.entries(c.priceByDate || {})) if (!c.blockedDates.has(d) && (out[d] === undefined || p < out[d])) out[d] = p;
-    }
-    return out;
-  })();
   const allBlocked = (() => {
     const cals = STAY_META.map(m => calendars[m.id]).filter((c): c is RoomCalendar => !!c);
     if (cals.length < STAY_META.length) return undefined;
@@ -121,9 +112,9 @@ export default function HomePage() {
           <div className="field"><label htmlFor="pets">Pets</label>
             <select id="pets" value={search.pets} onChange={e => update({ pets: parseInt(e.target.value) })}><option value={0}>No pets</option><option value={1}>1 pet</option><option value={2}>2 pets</option></select></div>
           <button className="btn go" type="submit">Show prices</button>
-          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} nightly={lowestNightly} modal={{ title: 'Select dates', cta: 'Show rooms', priceFrom: true, onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setTimeout(() => document.getElementById('stays')?.scrollIntoView({ behavior: 'smooth' }), 50); }} />}
+          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setTimeout(() => document.getElementById('stays')?.scrollIntoView({ behavior: 'smooth' }), 50); }} />}
         </form>
-        <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id); navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, Math.max(1, m?.minNights || 1)) })}`); }} />
+        <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} guests={search.guests} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id); navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, Math.max(1, m?.minNights || 1)) })}`); }} />
       </section>
 
       <section className="wrap"><div className="trust">
