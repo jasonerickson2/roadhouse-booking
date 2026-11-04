@@ -271,7 +271,7 @@ export default function BookingFlowPage() {
   // Guest details and the policy box are required before any payment method (card or wallet).
   const guestGate = (): string | null => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) return 'Please fill in your name, email and phone first.';
-    if (!policyAcknowledged) return 'Please agree to the cancellation policy and house rules first.';
+    if (!policyAcknowledged) return 'Please agree to the booking terms first.';
     if (!storeCard) return 'Please tick the card on file box first.';
     return null;
   };
@@ -574,12 +574,8 @@ export default function BookingFlowPage() {
             <label>Anything we should know<textarea name="specialRequests" placeholder="Arrival time, pets, questions" value={formData.specialRequests} onChange={handleInputChange} /></label>
 
             <label className="chk">
-              <input type="checkbox" required checked={policyAcknowledged} onChange={(e) => setPolicyAcknowledged(e.target.checked)} />
-              <span>I agree to the cancellation policy and the house rules for {roomName}.</span>
-            </label>
-            <label className="chk">
-              <input type="checkbox" required checked={storeCard} onChange={(e) => setStoreCard(e.target.checked)} />
-              <span>Securely save my card for this stay. I authorize Roadhouse Twin Lakes to charge this card for incidental fees (damage, extra cleaning, late checkout, unapproved pets or guests) per the booking terms.</span>
+              <input type="checkbox" required checked={policyAcknowledged && storeCard} onChange={(e) => { setPolicyAcknowledged(e.target.checked); setStoreCard(e.target.checked); }} />
+              <span>I agree to the <a href="/terms" target="_blank" rel="noopener">booking terms</a>.</span>
             </label>
 
             {paymentError && (

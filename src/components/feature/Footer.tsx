@@ -20,6 +20,7 @@ export default function Footer() {
           </div>
           <div>
             <strong>Good to know</strong><br />
+            <Link to="/terms">Booking terms</Link><br />
             <Link to="/cancellation-policy">Cancellation policy</Link><br />
             <a href="https://www.roadhousetwinlakes.com/blank-2">About us</a><br />
             <a href="https://www.roadhousetwinlakes.com/about-3">Our recs</a>
