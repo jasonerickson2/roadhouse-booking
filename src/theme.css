@@ -49,6 +49,10 @@ header .menu{background:transparent;border:1px solid rgba(255,255,255,.3);color:
 .field{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
 .field input,.field select,.field .date{-webkit-appearance:none;appearance:none;height:46px;min-height:46px;line-height:1.2;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px;color:var(--ink);background:var(--tan2);width:100%;text-align:left;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600}
 .searchbox .go{grid-column:1/-1}
+.searchbox .who{grid-column:1/-1;position:relative}
+.who-pop{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:30;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(28,27,25,.2);padding:16px;display:flex;flex-direction:column;gap:14px;text-transform:none;letter-spacing:0;color:var(--ink)}
+.who-pop .rc-step{justify-content:space-between}
+.who-pop .who-done{align-self:flex-end;padding:8px 18px}
 .searchbox .fine{grid-column:1/-1;text-align:center}
 .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
 /* calendar popover, Airbnb pattern: struck unavailable, checkout only half shade, round ends, soft band */
@@ -204,7 +208,9 @@ body{padding-bottom:76px}
 @media (min-width:700px){
  header{padding:10px 32px}header nav{display:flex}#m-book{display:none}header .logo{height:66px}header .wm b{font-size:24px}header .wm small{font-size:12px}
  .hero{min-height:620px}.hero h1{font-size:44px}.hero p{font-size:15px}.hero .txt{padding-bottom:96px}
- .searchbox{grid-template-columns:1fr 1fr 1fr 1fr auto;align-items:end;padding:18px}
+ .searchbox{grid-template-columns:1fr 1fr 2fr auto;align-items:end;padding:18px}
+ .searchbox .who{grid-column:auto}
+ .who-pop{left:auto;width:380px}
  .searchbox .go{grid-column:auto}
  .cal{left:0;right:auto;width:max-content}
  .calrow{flex-direction:row;gap:28px}

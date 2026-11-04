@@ -216,7 +216,7 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
   );
 }
 
-function Stepper({ label, note, value, min, max, onChange }: { label: string; note?: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
+export function Stepper({ label, note, value, min, max, onChange }: { label: string; note?: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
   return (
     <div className="rc-step">
       <span>{label}{note && <small>{note}</small>}</span>

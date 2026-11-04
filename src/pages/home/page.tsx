@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { rooms } from '../../mocks/rooms';
 import Footer from '../../components/feature/Footer';
-import RangeCalendar from '../../components/base/RangeCalendar';
+import RangeCalendar, { Stepper } from '../../components/base/RangeCalendar';
 import AvailabilityGrid from '../../components/base/AvailabilityGrid';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
-import { STAY_META, addDays, closedUntil, extrasTotal, fmt, key, minStay, nice, nightsBetween, readSearch, season, writeSearch, type SearchState, type StayMeta } from '../../lib/booking';
+import { STAY_META, addDays, closedUntil, extrasTotal, fmt, key, minStay, nice, nightsBetween, partyLabel, readSearch, season, writeSearch, type SearchState, type StayMeta } from '../../lib/booking';
 import type { RoomAvailability, RoomCalendar } from '../../services/availability';
 
 // Paste real guest reviews here: { text: 'quote', who: 'First name · Room 1 · Month year' }
@@ -42,6 +42,8 @@ export default function HomePage() {
   const { rooms: avail, loading, error } = useAvailability(search);
   const { calendars, loading: calLoading } = useCalendars();
   const [calOpen, setCalOpen] = useState(false);
+  const [whoOpen, setWhoOpen] = useState(false);
+  const whoLabel = `${partyLabel(search)}${search.pets ? `, ${search.pets} pet${search.pets > 1 ? 's' : ''}` : ''}`;
   const calRef = useRef<HTMLFormElement>(null);
   // The picker reports guests and pets just before the dates; both go into one URL update.
   const partyRef = useRef<{ guests: number; pets: number; children: number; infants: number } | null>(null);
@@ -59,7 +61,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const onResize = () => setWide(window.innerWidth >= 700);
-    const onClick = (e: MouseEvent) => { if ((e.target as HTMLElement)?.closest?.('.rc-modal')) return; if (calRef.current && !calRef.current.contains(e.target as Node)) setCalOpen(false); };
+    const onClick = (e: MouseEvent) => { if ((e.target as HTMLElement)?.closest?.('.rc-modal')) return; if (calRef.current && !calRef.current.contains(e.target as Node)) { setCalOpen(false); setWhoOpen(false); } };
     window.addEventListener('resize', onResize); document.addEventListener('click', onClick);
     return () => { window.removeEventListener('resize', onResize); document.removeEventListener('click', onClick); };
   }, []);
@@ -132,10 +134,17 @@ export default function HomePage() {
         <form className="searchbox" ref={calRef} onSubmit={e => { e.preventDefault(); showResults(); }}>
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setCalOpen(o => !o)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setCalOpen(o => !o)}>{nice(search.checkOut)}</button></div>
-          <div className="field"><label htmlFor="guests">Guests</label>
-            <select id="guests" value={search.guests} onChange={e => update({ guests: parseInt(e.target.value) })}>{[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} guest{n > 1 ? 's' : ''}</option>)}</select></div>
-          <div className="field"><label htmlFor="pets">Pets</label>
-            <select id="pets" value={search.pets} onChange={e => update({ pets: parseInt(e.target.value) })}><option value={0}>No pets</option><option value={1}>1 pet</option><option value={2}>2 pets</option></select></div>
+          {/* One "Who's coming" field (Airbnb pattern) for adults, children, infants and pets. */}
+          <div className="field who"><span>Who's coming</span><button type="button" className="date" aria-expanded={whoOpen} onClick={() => { setWhoOpen(o => !o); setCalOpen(false); }}>{whoLabel}</button>
+            {whoOpen && (
+              <div className="who-pop">
+                <Stepper label="Adults" note="13 and up" value={search.guests - search.children} min={1} max={8 - search.children} onChange={n => update({ guests: n + search.children })} />
+                <Stepper label="Children" note="Ages 2 to 12 (5 and up in lodge rooms)" value={search.children} min={0} max={8 - (search.guests - search.children)} onChange={n => update({ guests: search.guests - search.children + n, children: n })} />
+                <Stepper label="Infants" note="Under 2, Carriage House and Grizzly only" value={search.infants} min={0} max={1} onChange={n => update({ infants: n })} />
+                <Stepper label="Pets" value={search.pets} min={0} max={2} onChange={n => update({ pets: n })} />
+                <button type="button" className="btn who-done" onClick={() => setWhoOpen(false)}>Done</button>
+              </div>
+            )}</div>
           <button className="btn go" type="submit">Show prices</button>
           {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', party: { guests: search.guests, pets: search.pets, children: search.children, infants: search.infants, onChange: (g, p, c, i) => { partyRef.current = { guests: g, pets: p, children: c, infants: i }; } }, onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b, ...(partyRef.current || {}) }); partyRef.current = null; setTimeout(showResults, 50); }} />}
         </form>
@@ -165,8 +174,8 @@ export default function HomePage() {
       </section>
 
       <section className="wrap sec" id="reviews">
-        <h2>4.9 across six stays</h2>
-        <div className="sub">{rooms.reduce((a, r) => a + r.reviews, 0)} reviews on Airbnb and Booking.com. Carriage House holds a 5.0, Room 1 and the Grizzly Maze sit at 4.98.</div>
+        <h2>{(rooms.reduce((a, r) => a + r.rating * r.reviews, 0) / rooms.reduce((a, r) => a + r.reviews, 0)).toFixed(2)} stars from {rooms.reduce((a, r) => a + r.reviews, 0)} guests</h2>
+        <div className="sub">Reviews on Airbnb and Booking.com. Carriage House holds a 5.0, Room 1 and the Grizzly Maze sit at 4.98.</div>
         {REVIEWS.length > 0 && <div className="cards">{REVIEWS.map(r => <blockquote key={r.who} className="review" style={{ margin: 0 }}><span className="stars">★★★★★</span><span>{r.text}</span><cite>{r.who}</cite></blockquote>)}</div>}
       </section>
 
