@@ -61,7 +61,7 @@ export default function RoomDetailPage() {
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkOut)}</button></div>
         </div>
-        {showCal && <RangeCalendar inline checkIn={search.checkIn} checkOut={search.checkOut} months={1} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setShowCal(false); }} />}
+        {showCal && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} modal={{ title: meta.name, cta: 'Save dates', onClose: () => setShowCal(false) }} onChange={(a, b) => update({ checkIn: a, checkOut: b })} />}
         <div className="line"><span>{fmt((p?.baseRate || 0) / Math.max(1, nights))} × {nights} night{nights > 1 ? 's' : ''}</span><span>{fmt(p?.baseRate || 0)}</span></div>
         <div className="line"><span>Cleaning</span><span>{fmt(p?.cleaningFee || 0)}</span></div>
         {ex.pet > 0 && <div className="line"><span>Pet fee, per stay</span><span>{fmt(ex.pet)}</span></div>}
@@ -80,7 +80,8 @@ export default function RoomDetailPage() {
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkOut)}</button></div>
         </div>
-        {(showCal || st === 'booked') && <RangeCalendar inline checkIn={search.checkIn} checkOut={search.checkOut} months={1} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setShowCal(false); }} />}
+        {showCal && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} modal={{ title: meta.name, cta: 'Save dates', onClose: () => setShowCal(false) }} onChange={(a, b) => update({ checkIn: a, checkOut: b })} />}
+        {st === 'booked' && !showCal && <RangeCalendar inline checkIn={search.checkIn} checkOut={search.checkOut} months={1} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setShowCal(false); }} />}
         {st === 'guests' && <div className="field"><label htmlFor="g2">Guests</label><select id="g2" value={search.guests} onChange={e => update({ guests: parseInt(e.target.value) })}>{[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} guest{n > 1 ? 's' : ''}</option>)}</select></div>}
       </>}
     </div>

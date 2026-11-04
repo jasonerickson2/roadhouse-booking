@@ -43,7 +43,7 @@
       (function(){var b=document.getElementById('mhr-banner');if(!b)return;
         if(document.cookie.indexOf('mhr_banner=1')>-1){b.remove();return;}
         // Keep the notice out of the way of the date picker and the payment form.
-        var obs=new MutationObserver(function(){var busy=document.querySelector('.cal.open, #card-container, .sq-card-wrapper');b.style.display=busy?'none':'';});
+        var obs=new MutationObserver(function(){var busy=document.querySelector('.cal.open, .rc-modal, #card-container, .sq-card-wrapper');b.style.display=busy?'none':'';});
         obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
       })();
     </script>

@@ -43,6 +43,15 @@ export default function HomePage() {
   const calRef = useRef<HTMLFormElement>(null);
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
   // Nights no room can host: blocked on every calendar we have. Shown struck through in the search picker.
+  // Lowest open nightly rate per date across rooms, for the date picker (display only, Hostex rates).
+  const lowestNightly = (() => {
+    const out: Record<string, number> = {};
+    for (const m of STAY_META) {
+      const c = calendars[m.id]; if (!c) continue;
+      for (const [d, p] of Object.entries(c.priceByDate || {})) if (!c.blockedDates.has(d) && (out[d] === undefined || p < out[d])) out[d] = p;
+    }
+    return out;
+  })();
   const allBlocked = (() => {
     const cals = STAY_META.map(m => calendars[m.id]).filter((c): c is RoomCalendar => !!c);
     if (cals.length < STAY_META.length) return undefined;
@@ -53,7 +62,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const onResize = () => setWide(window.innerWidth >= 700);
-    const onClick = (e: MouseEvent) => { if (calRef.current && !calRef.current.contains(e.target as Node)) setCalOpen(false); };
+    const onClick = (e: MouseEvent) => { if ((e.target as HTMLElement)?.closest?.('.rc-modal')) return; if (calRef.current && !calRef.current.contains(e.target as Node)) setCalOpen(false); };
     window.addEventListener('resize', onResize); document.addEventListener('click', onClick);
     return () => { window.removeEventListener('resize', onResize); document.removeEventListener('click', onClick); };
   }, []);
@@ -112,9 +121,9 @@ export default function HomePage() {
           <div className="field"><label htmlFor="pets">Pets</label>
             <select id="pets" value={search.pets} onChange={e => update({ pets: parseInt(e.target.value) })}><option value={0}>No pets</option><option value={1}>1 pet</option><option value={2}>2 pets</option></select></div>
           <button className="btn go" type="submit">Show prices</button>
-          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} months={wide ? 2 : 1} blocked={allBlocked} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setCalOpen(false); }} />}
+          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} nightly={lowestNightly} modal={{ title: 'Select dates', cta: 'Show rooms', priceFrom: true, onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setTimeout(() => document.getElementById('stays')?.scrollIntoView({ behavior: 'smooth' }), 50); }} />}
         </form>
-        <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} />
+        <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id); navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, Math.max(1, m?.minNights || 1)) })}`); }} />
       </section>
 
       <section className="wrap"><div className="trust">

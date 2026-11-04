@@ -1,5 +1,13 @@
-import { useMemo, useState } from 'react';
-import { addDays, key, parseKey, today } from '../../lib/booking';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { addDays, key, today } from '../../lib/booking';
+
+interface ModalOpts {
+  title: string;                          // "Select dates" or the room name
+  cta: string;                            // "Show rooms" / "Save dates"
+  priceFrom?: boolean;                    // true when prices are the lowest across rooms ("from $230")
+  onClose: () => void;
+}
 
 interface Props {
   checkIn: Date;
@@ -8,30 +16,27 @@ interface Props {
   blocked?: Set<string>;                  // nights that cannot be part of the stay
   noArrival?: Set<string>;                // dates that cannot be a check in
   minNights?: Record<string, number>;     // minimum stay when checking in on that date
-  nightly?: Record<string, number>;       // price per night, shown in the cell when known
-  months?: number;                        // 1 on phone, 2 on desktop
+  nightly?: Record<string, number>;       // price per night, shown in the cell when known (display only)
+  months?: number;                        // months shown side by side (inline mode)
   inline?: boolean;
+  modal?: ModalOpts;                      // Airbnb style panel on desktop, bottom sheet on phone
 }
 
 const MONTHS_AHEAD = 18;
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const money = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
+const short = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 // Two step range picker in the pattern guests know from Airbnb.
-//   - past and blocked nights are struck through
-//   - a night you can leave on but not sleep on is "checkout only" and half shaded
-//   - after the first tap, nights that would break the minimum stay or cross a block gray out
-//   - hovering previews the range; the ends are solid circles, the span is a soft band
-export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, noArrival, minNights, nightly, months = 2, inline }: Props) {
-  const [pick, setPick] = useState<Date | null>(null);
-  const [hover, setHover] = useState<Date | null>(null);
-  const [month, setMonth] = useState(() => new Date(checkIn.getFullYear(), checkIn.getMonth(), 1));
+//   - past and booked nights are struck through (booked ones striped)
+//   - after the first tap, nights that would break the minimum stay or cross a booking gray out
+//   - in modal mode the range is a draft until the guest presses the button
+export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, noArrival, minNights, nightly, months = 2, inline, modal }: Props) {
   const t = today();
   const last = useMemo(() => new Date(t.getFullYear(), t.getMonth() + MONTHS_AHEAD, 1), [t]);
-
   const isBlocked = (d: Date) => !!blocked && blocked.has(key(d));
   const canArrive = (d: Date) => !(noArrival && noArrival.has(key(d)));
   const minFor = (d: Date) => (minNights && minNights[key(d)]) || 1;
-
   function crossesBlocked(x: Date, y: Date) {
     for (let d = new Date(x); d < y; d = addDays(d, 1)) if (isBlocked(d)) return true;
     return false;
@@ -43,26 +48,57 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
     return d;
   }
 
+  const committedOk = !crossesBlocked(checkIn, checkOut);
+  const [pick, setPick] = useState<Date | null>(null);
+  const [hover, setHover] = useState<Date | null>(null);
+  const [draft, setDraft] = useState<{ a: Date; b: Date } | null>(committedOk ? { a: checkIn, b: checkOut } : null);
+  const [month, setMonth] = useState(() => {
+    const base = committedOk && checkIn >= t ? checkIn : t;
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+  const shown = modal ? 2 : months;
+
+  // Modal: Escape closes, page behind does not scroll.
+  useEffect(() => {
+    if (!modal) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') modal.onClose(); };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
+  }, [modal]);
+
   function tap(d: Date) {
-    if (!pick) { setPick(d); return; }
+    if (!pick) { setPick(d); setDraft(null); return; }
     if (d <= pick) { setPick(d); return; }
     const okOut = d <= latestCheckout(pick);
-    const okMin = (d.getTime() - pick.getTime()) / 864e5 >= minFor(pick);
+    const okMin = Math.round((d.getTime() - pick.getTime()) / 864e5) >= minFor(pick);
     if (!okOut || !okMin) { setPick(d); return; }
+    if (modal) { setDraft({ a: pick, b: d }); setPick(null); setHover(null); return; }
     onChange(pick, d); setPick(null); setHover(null);
   }
 
-  // Range being shown: a committed stay (only if it is still bookable), or an in progress pick with hover preview.
-  const committedOk = !crossesBlocked(checkIn, checkOut);
-  const a = pick || (committedOk ? checkIn : null);
-  const b = pick ? (hover && hover > pick ? hover : null) : (committedOk ? checkOut : null);
+  // Range being shown: an in progress pick with hover preview, else the draft (modal) or the committed stay.
+  const settled = modal ? draft : (committedOk ? { a: checkIn, b: checkOut } : null);
+  const a = pick || settled?.a || null;
+  const b = pick ? (hover && hover > pick ? hover : null) : settled?.b || null;
   const maxOut = pick ? latestCheckout(pick) : null;
   const minOut = pick ? addDays(pick, minFor(pick)) : null;
   const canGoBack = month > new Date(t.getFullYear(), t.getMonth(), 1);
-  const canGoFwd = new Date(month.getFullYear(), month.getMonth() + months, 1) <= last;
+  const canGoFwd = new Date(month.getFullYear(), month.getMonth() + shown, 1) <= last;
+
+  // Cheapest price among the visible open nights gets a highlight (home page only).
+  const visibleKeys: string[] = [];
+  for (let k = 0; k < shown; k++) {
+    const m = new Date(month.getFullYear(), month.getMonth() + k, 1);
+    const dim = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+    for (let dd = 1; dd <= dim; dd++) { const dt = new Date(m.getFullYear(), m.getMonth(), dd); if (dt >= t && !isBlocked(dt)) visibleKeys.push(key(dt)); }
+  }
+  const visiblePrices = visibleKeys.map(k => nightly?.[k]).filter((p): p is number => !!p);
+  const lowest = modal?.priceFrom && visiblePrices.length ? Math.min(...visiblePrices) : null;
 
   const blocks = [];
-  for (let k = 0; k < months; k++) {
+  for (let k = 0; k < shown; k++) {
     const m = new Date(month.getFullYear(), month.getMonth() + k, 1);
     const first = m.getDay(); const dim = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
     const cells = [];
@@ -76,12 +112,9 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
 
       if (past) { cls += ' past'; disabled = true; }
       else if (!pick) {
-        // Choosing check in: a blocked night is out; a free night after a blocked one is checkout only.
         if (blk) { cls += ' booked'; disabled = true; title = 'Booked'; }
         else if (!canArrive(dt)) { cls += ' noarrive'; disabled = true; title = 'No check in on this day'; }
-        else if (prevBlk && blk === false && isBlocked(dt)) { cls += ' booked'; disabled = true; }
       } else {
-        // Choosing check out: anything before the pick restarts; after it, bounded by block and min stay.
         if (dt <= pick) { if (blk) { cls += ' booked'; disabled = true; } }
         else if (maxOut && dt > maxOut) { cls += ' unreach'; disabled = true; title = 'Booked before then'; }
         else if (minOut && dt < minOut) { cls += ' short'; disabled = true; title = `${minFor(pick)} night minimum`; }
@@ -95,12 +128,13 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
       if (pick && !b && key(pick) === k2) cls += ' start solo';
 
       const price = nightly && nightly[k2];
+      if (lowest && price === lowest && !disabled) cls += ' deal';
       cells.push(
         <button type="button" key={k2} className={cls} disabled={disabled} title={title}
           onClick={() => tap(dt)} onMouseEnter={() => pick && setHover(dt)} onFocus={() => pick && setHover(dt)}
-          aria-label={dt.toDateString() + (title ? ', ' + title : '')}>
+          aria-label={dt.toDateString() + (title ? ', ' + title : '') + (price && !disabled ? `, ${money(price)}` : '')}>
           <span className="n">{dd}</span>
-          {price != null && !disabled && <span className="p">${Math.round(price)}</span>}
+          {price != null && price > 0 && !disabled && !past && <span className="p">{money(price)}</span>}
         </button>
       );
     }
@@ -108,8 +142,8 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
       <div className="month" key={k} onMouseLeave={() => setHover(null)}>
         <div className="mh">
           {k === 0 ? <button type="button" disabled={!canGoBack} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} aria-label="Previous month">‹</button> : <span />}
-          <span>{m.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
-          {k === months - 1 ? <button type="button" disabled={!canGoFwd} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} aria-label="Next month">›</button> : <span />}
+          <span>{m.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+          {k === shown - 1 ? <button type="button" disabled={!canGoFwd} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} aria-label="Next month">›</button> : <span />}
         </div>
         <div className="dow">{DOW.map((d, i) => <span key={i}>{d}</span>)}</div>
         <div className="days">{cells}</div>
@@ -118,17 +152,51 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
   }
 
   const hint = pick
-    ? (minFor(pick) > 1 ? `Select checkout. ${minFor(pick)} night minimum from ${pick.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.` : 'Select your checkout date.')
+    ? (minFor(pick) > 1 ? `Select checkout. ${minFor(pick)} night minimum from ${pick.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.` : 'Select your checkout date.')
     : 'Select your check in date.';
 
-  return (
-    <div className={'cal open' + (inline ? ' inline' : '')} role="group" aria-label="Choose dates">
-      <div className="calrow">{blocks}</div>
-      <div className="calfoot">
-        <span className="hint">{hint}</span>
-        <span className="legend"><i className="k-booked" />Unavailable<i className="k-out" />Checkout only</span>
-        {pick && <button type="button" className="clear" onClick={() => { setPick(null); setHover(null); }}>Clear</button>}
+  if (!modal) {
+    return (
+      <div className={'cal open' + (inline ? ' inline' : '')} role="group" aria-label="Choose dates">
+        <div className="calrow">{blocks}</div>
+        <div className="calfoot">
+          <span className="hint">{hint}</span>
+          <span className="legend"><i className="k-booked" />Unavailable<i className="k-out" />Checkout only</span>
+          {pick && <button type="button" className="clear" onClick={() => { setPick(null); setHover(null); }}>Clear</button>}
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  // ---- modal: panel on desktop, bottom sheet on phone ----
+  const nights = draft ? Math.round((draft.b.getTime() - draft.a.getTime()) / 864e5) : 0;
+  let sum = 0; let priced = !!draft && !!nightly;
+  if (draft && nightly) for (let d = new Date(draft.a); d < draft.b; d = addDays(d, 1)) { const p = nightly[key(d)]; if (!p) { priced = false; break; } sum += p; }
+  const sub = draft ? `${short(draft.a)} to ${short(draft.b)} · ${nights} night${nights > 1 ? 's' : ''}` : hint;
+
+  return createPortal(
+    <div className="rc-modal" role="dialog" aria-modal="true" aria-label={modal.title}>
+      <div className="rc-scrim" onClick={modal.onClose} />
+      <div className="rc-panel">
+        <div className="rc-grab" />
+        <div className="rc-top">
+          <div><h3>{modal.title}</h3><p>{sub}</p></div>
+          <button type="button" className="rc-x" onClick={modal.onClose} aria-label="Close">✕</button>
+        </div>
+        <div className="calrow">{blocks}</div>
+        <div className="rc-foot">
+          <div className="rc-legend"><span><i className="k-booked" />Booked</span><span>{modal.priceFrom ? 'Lowest nightly rate' : 'Price per night'}</span></div>
+          <div className="rc-sum">
+            {draft && priced ? <><b>{modal.priceFrom ? 'from ' : ''}{money(sum)}</b><span>{nights} night{nights > 1 ? 's' : ''} before fees</span></>
+              : <span>{draft ? `${nights} night${nights > 1 ? 's' : ''}` : 'Pick your dates'}</span>}
+          </div>
+          <div className="rc-btns">
+            <button type="button" className="rc-clear" onClick={() => { setPick(null); setHover(null); setDraft(null); }}>Clear</button>
+            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
