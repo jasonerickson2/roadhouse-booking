@@ -17,7 +17,7 @@ export default function Lightbox({ photos, start, alt, onClose }: { photos: stri
       onTouchStart={e => { x0 = e.touches[0].clientX; }} onTouchEnd={e => { const dx = e.changedTouches[0].clientX - x0; if (dx > 50) prev(); if (dx < -50) next(); }}>
       <button className="lb-x" aria-label="Close" onClick={onClose}>×</button>
       <button className="lb-nav lb-prev" aria-label="Previous photo" onClick={e => { e.stopPropagation(); prev(); }}>‹</button>
-      <img src={photos[i].replace(/\/w\d+$/, '/w1600')} alt={`${alt} photo ${i + 1}`} onClick={e => e.stopPropagation()} />
+      <img src={photos[i]} alt={`${alt} photo ${i + 1}`} onClick={e => e.stopPropagation()} />
       <button className="lb-nav lb-next" aria-label="Next photo" onClick={e => { e.stopPropagation(); next(); }}>›</button>
       <div className="lb-count">{i + 1} / {n}</div>
     </div>

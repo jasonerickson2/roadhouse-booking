@@ -67,16 +67,24 @@ export default function HomePage() {
     return r.pricing.totalAmount + extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false }).total;
   }
   const openCount = STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').length;
-  const cheapest = Math.min(...STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').map(cardTotal));
+  // Before taxes, with cleaning, pet and card processing in (FTC all in rule allows taxes to come later).
+  function preTaxTotal(meta: StayMeta) {
+    const r = byId(meta.id); if (!r?.pricing) return 0;
+    return cardTotal(meta) - r.pricing.taxTotal - extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false }).tax;
+  }
+  const cheapest = Math.min(...STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').map(preTaxTotal));
 
   function Card({ meta, wideCard }: { meta: StayMeta; wideCard?: boolean }) {
     const mock = roomMock(meta.id); const st = stayStatus(meta, search, byId(meta.id), loading, calendars[meta.id]); const total = cardTotal(meta);
     const r = byId(meta.id); const nightly = r?.pricing?.nightlyPrices?.length ? Math.min(...r.pricing.nightlyPrices) : mock.price;
+    // FTC all in rule: the most prominent price is the total with every mandatory fee (cleaning, pet, card processing); taxes may come later.
+    const preTax = preTaxTotal(meta);
+    const avgNight = r?.pricing?.nightlyPrices?.length ? r.pricing.baseRate / r.pricing.nightlyPrices.length : nightly;
     const bedsText = mock.bedTypes.length > 2 ? `${mock.beds} beds` : mock.bedTypes.map(b => b.beds).join(', ');
     const spec = `Sleeps ${meta.sleeps} · ${bedsText} · ${mock.bathrooms} bath${meta.season ? ' · ' + meta.season : ''}`;
     let line: React.ReactNode, badge: React.ReactNode = meta.tag ? <span className="badge">{meta.tag}</span> : null;
     if (st === 'loading') line = <span className="spec">Checking price…</span>;
-    else if (st === 'fits') line = <><span className="price"><b>{fmt(total)}</b> <span className="spec">total, {nights} night{nights > 1 ? 's' : ''}, fees and tax in</span></span><span className="ok">Open for your dates</span></>;
+    else if (st === 'fits') line = <><span className="price"><b>{fmt(preTax)}</b> <span className="spec">total before taxes</span><br /><span className="spec sub">{fmt(avgNight)} avg a night · {nights} night{nights > 1 ? 's' : ''} · includes cleaning{search.pets > 0 ? ' and pet fee' : ''}</span></span><span className="ok">Open for your dates</span></>;
     else if (st === 'booked') { badge = <span className="badge gray">Booked for these dates</span>; line = <><span className="price"><span className="spec">from</span> <b>{fmt(nightly)}</b> <span className="spec">a night</span></span><span className="no">Tap to see open dates</span></>; }
     else line = <><span className="price"><b>{fmt(nightly)}</b> <span className="spec">a night{meta.minNights > 1 ? `, ${meta.minNights} night minimum` : ''}</span></span><span className="no">{st === 'guests' ? `Sleeps up to ${meta.sleeps}` : `${meta.minNights} night minimum`}</span></>;
     return (
@@ -157,7 +165,7 @@ export default function HomePage() {
       </section>
       <Footer />
       <div className="sticky">
-        {isFinite(cheapest) ? <><div className="l"><b>from {fmt(cheapest)}</b><span>{nights} night{nights > 1 ? 's' : ''}, all in</span></div><a className="btn" href="#stays">See rooms</a></>
+        {isFinite(cheapest) ? <><div className="l"><b>from {fmt(cheapest)}</b><span>{nights} night{nights > 1 ? 's' : ''}, before taxes</span></div><a className="btn" href="#stays">See rooms</a></>
           : <><div className="l"><b>{loading ? 'Checking…' : 'Nothing open'}</b><span>{nice(search.checkIn)}</span></div><a className="btn" href="#search" onClick={() => navigate('#search')}>Change dates</a></>}
       </div>
     </>

@@ -35,7 +35,7 @@ export default function RoomDetailPage() {
   if (!meta || !mock) return <div className="wrap" style={{ padding: 40 }}><p>Room not found.</p><Link to="/">All rooms</Link></div>;
 
   const r = avail?.find(x => x.roomId === roomId);
-  const st = stayStatus(meta, search, r, loading);
+  const st = stayStatus(meta, search, r, loading, cal);
   const update = (patch: Partial<SearchState>, extra: Record<string, string> = {}) => setParams(writeSearch({ ...search, ...patch }, { early: String(earlyHours), late: late ? '1' : '0', ...extra }), { replace: true });
   const setExtra = (e: Partial<Extras>) => update({}, { early: String(e.earlyHours ?? earlyHours), late: (e.late ?? late) ? '1' : '0' });
 
