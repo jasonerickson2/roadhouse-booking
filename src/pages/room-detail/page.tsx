@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { rooms } from '../../mocks/rooms';
 import Footer from '../../components/feature/Footer';
@@ -36,6 +36,7 @@ export default function RoomDetailPage() {
 
   const r = avail?.find(x => x.roomId === roomId);
   const st = stayStatus(meta, search, r, loading, cal);
+  const partyRef = useRef<Partial<SearchState> | null>(null);
   const update = (patch: Partial<SearchState>, extra: Record<string, string> = {}) => setParams(writeSearch({ ...search, ...patch }, { early: String(earlyHours), late: late ? '1' : '0', ...extra }), { replace: true });
   const setExtra = (e: Partial<Extras>) => update({}, { early: String(e.earlyHours ?? earlyHours), late: (e.late ?? late) ? '1' : '0' });
 
@@ -61,7 +62,7 @@ export default function RoomDetailPage() {
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkOut)}</button></div>
         </div>
-        {showCal && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} modal={{ title: meta.name, cta: 'Save dates', onClose: () => setShowCal(false) }} onChange={(a, b) => update({ checkIn: a, checkOut: b })} />}
+        {showCal && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} modal={{ title: meta.name, cta: 'Save dates', party: { guests: Math.min(search.guests, meta.sleeps), pets: Math.min(search.pets, meta.maxPets), children: Math.min(search.children, Math.min(search.guests, meta.sleeps) - 1), infants: search.infants, maxGuests: meta.sleeps, maxPets: meta.maxPets, onChange: (g, p, c, i) => { partyRef.current = { guests: g, pets: p, children: c, infants: i }; } }, onClose: () => setShowCal(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b, ...(partyRef.current || {}) }); partyRef.current = null; }} />}
         <div className="line"><span>{fmt((p?.baseRate || 0) / Math.max(1, nights))} × {nights} night{nights > 1 ? 's' : ''}</span><span>{fmt(p?.baseRate || 0)}</span></div>
         <div className="line"><span>Cleaning</span><span>{fmt(p?.cleaningFee || 0)}</span></div>
         {ex.pet > 0 && <div className="line"><span>Pet fee, per stay</span><span>{fmt(ex.pet)}</span></div>}
@@ -80,7 +81,7 @@ export default function RoomDetailPage() {
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkOut)}</button></div>
         </div>
-        {showCal && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} modal={{ title: meta.name, cta: 'Save dates', onClose: () => setShowCal(false) }} onChange={(a, b) => update({ checkIn: a, checkOut: b })} />}
+        {showCal && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} modal={{ title: meta.name, cta: 'Save dates', party: { guests: Math.min(search.guests, meta.sleeps), pets: Math.min(search.pets, meta.maxPets), children: Math.min(search.children, Math.min(search.guests, meta.sleeps) - 1), infants: search.infants, maxGuests: meta.sleeps, maxPets: meta.maxPets, onChange: (g, p, c, i) => { partyRef.current = { guests: g, pets: p, children: c, infants: i }; } }, onClose: () => setShowCal(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b, ...(partyRef.current || {}) }); partyRef.current = null; }} />}
         {st === 'booked' && !showCal && <RangeCalendar inline checkIn={search.checkIn} checkOut={search.checkOut} months={1} blocked={cal?.blockedDates} noArrival={cal?.noArrivalDates} minNights={cal?.minNightsByDate} nightly={cal?.priceByDate} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setShowCal(false); }} />}
         {st === 'guests' && <div className="field"><label htmlFor="g2">Guests</label><select id="g2" value={search.guests} onChange={e => update({ guests: parseInt(e.target.value) })}>{[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} guest{n > 1 ? 's' : ''}</option>)}</select></div>}
       </>}

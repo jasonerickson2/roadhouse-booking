@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { rooms } from '../../mocks/rooms';
 import { AvailabilityService } from '../../services/availability';
 import Footer from '../../components/feature/Footer';
-import { extrasNote, extrasTotal, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
+import { extrasNote, extrasTotal, metaById, partyLabel, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
 
 // Room to Hostex Property ID mapping
 const ROOM_HOSTEX_MAP: Record<number, number> = {
@@ -344,6 +344,8 @@ export default function BookingFlowPage() {
             checkInDate: checkIn,
             checkOutDate: checkOut,
             guests: parseInt(guests.toString()),
+            children: search.children,
+            infants: search.infants,
 
             guest: {
               firstName: formData.firstName,
@@ -500,7 +502,7 @@ export default function BookingFlowPage() {
   const backTo = `/room/${room.id}?${writeSearch(search, { early: String(earlyHours), late: late ? '1' : '0' })}`;
   const canSubmit = policyAcknowledged && storeCard && !isProcessingPayment && !!pricingData;
   const earlyLabel = EARLY_LABEL;
-  const stayLine = `${nice(search.checkIn)} to ${nice(search.checkOut)} · ${nights} night${nights > 1 ? 's' : ''} · ${search.guests} guest${search.guests > 1 ? 's' : ''}${search.pets ? ` · ${search.pets} pet${search.pets > 1 ? 's' : ''}` : ''}`;
+  const stayLine = `${nice(search.checkIn)} to ${nice(search.checkOut)} · ${nights} night${nights > 1 ? 's' : ''} · ${partyLabel(search)}${search.pets ? ` · ${search.pets} pet${search.pets > 1 ? 's' : ''}` : ''}`;
 
   // Confirmation
   if (currentStep === 'confirmation' && confirmationData) {

@@ -6,7 +6,8 @@ interface ModalOpts {
   title: string;                          // "Select dates" or the room name
   cta: string;                            // "Show rooms" / "Save dates"
   priceFrom?: boolean;                    // true when prices are the lowest across rooms ("from $230")
-  party?: { guests: number; pets: number; maxGuests?: number; maxPets?: number; onChange: (guests: number, pets: number) => void };
+  // guests is adults plus children (what must fit sleeps); infants do not count, at most 1.
+  party?: { guests: number; pets: number; children?: number; infants?: number; maxGuests?: number; maxPets?: number; onChange: (guests: number, pets: number, children: number, infants: number) => void };
   onClose: () => void;
 }
 
@@ -58,7 +59,10 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
     return new Date(base.getFullYear(), base.getMonth(), 1);
   });
   const shown = modal ? 2 : months;
-  const [guests, setGuests] = useState(modal?.party?.guests ?? 2);
+  const [adults, setAdults] = useState((modal?.party?.guests ?? 2) - (modal?.party?.children ?? 0));
+  const [kids, setKids] = useState(modal?.party?.children ?? 0);
+  const [infants, setInfants] = useState(modal?.party?.infants ?? 0);
+  const maxG = modal?.party?.maxGuests ?? 8;
   const [pets, setPets] = useState(modal?.party?.pets ?? 0);
 
   // Modal: Escape closes, page behind does not scroll.
@@ -189,7 +193,9 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
         <div className="calrow">{blocks}</div>
         {modal.party && (
           <div className="rc-party">
-            <Stepper label="Guests" value={guests} min={1} max={modal.party.maxGuests ?? 8} onChange={setGuests} />
+            <Stepper label="Adults" note="13 and up" value={adults} min={1} max={maxG - kids} onChange={setAdults} />
+            <Stepper label="Children" note="Ages 2 to 12" value={kids} min={0} max={maxG - adults} onChange={setKids} />
+            <Stepper label="Infants" note="Under 2" value={infants} min={0} max={1} onChange={setInfants} />
             <Stepper label="Pets" value={pets} min={0} max={modal.party.maxPets ?? 2} onChange={setPets} />
           </div>
         )}
@@ -201,7 +207,7 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
           </div>
           <div className="rc-btns">
             <button type="button" className="rc-clear" onClick={() => { setPick(null); setHover(null); setDraft(null); }}>Clear</button>
-            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { modal.party?.onChange(guests, pets); onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
+            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { modal.party?.onChange(adults + kids, pets, kids, infants); onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
           </div>
         </div>
       </div>
@@ -210,10 +216,10 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
   );
 }
 
-function Stepper({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
+function Stepper({ label, note, value, min, max, onChange }: { label: string; note?: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
   return (
     <div className="rc-step">
-      <span>{label}</span>
+      <span>{label}{note && <small>{note}</small>}</span>
       <button type="button" aria-label={`Fewer ${label.toLowerCase()}`} disabled={value <= min} onClick={() => onChange(value - 1)}>−</button>
       <b aria-live="polite">{value}</b>
       <button type="button" aria-label={`More ${label.toLowerCase()}`} disabled={value >= max} onClick={() => onChange(value + 1)}>+</button>

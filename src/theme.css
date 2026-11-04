@@ -350,6 +350,9 @@ button.ag-c:hover{outline:2px solid var(--ink);outline-offset:-2px}
 .rc-party{display:flex;gap:28px;justify-content:flex-end;align-items:center;padding:14px 0 0;border-top:1px solid #EEE9DF;margin-top:12px;flex-wrap:wrap}
 .rc-step{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600}
 .rc-step span{margin-right:4px}
+.rc-step span small{display:block;font-size:12px;font-weight:400;color:var(--muted,#6b6b6b)}
+.rc-party{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px 28px}
+.rc-step span{flex:1}
 .rc-step button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:18px;line-height:1;cursor:pointer;color:var(--ink)}
 .rc-step button:disabled{opacity:.3;cursor:default}
 .rc-step b{min-width:16px;text-align:center}

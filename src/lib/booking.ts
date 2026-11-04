@@ -47,7 +47,14 @@ export const nightsBetween = (a: Date, b: Date) => Math.round((b.getTime() - a.g
 export const fmt = (n: number) => '$' + Math.round(n).toLocaleString();
 
 // ---- search state in the URL so every page agrees ----
-export interface SearchState { checkIn: Date; checkOut: Date; guests: number; pets: number; }
+// guests is adults plus children and is what must fit a room's sleeps. children (2 to 12) is part of guests.
+// infants (under 2) do not count toward sleeps, at most 1 per room.
+export interface SearchState { checkIn: Date; checkOut: Date; guests: number; pets: number; children: number; infants: number; }
+export const adultsOf = (s: { guests: number; children: number }) => s.guests - s.children;
+export function partyLabel(s: { guests: number; children: number; infants: number }): string {
+  const a = s.guests - s.children;
+  return [`${a} adult${a > 1 ? 's' : ''}`, s.children ? `${s.children} child${s.children > 1 ? 'ren' : ''}` : '', s.infants ? `${s.infants} infant` : ''].filter(Boolean).join(', ');
+}
 
 export function readSearch(params: URLSearchParams): SearchState {
   const t = today();
@@ -56,10 +63,12 @@ export function readSearch(params: URLSearchParams): SearchState {
   let checkOut = co ? parseKey(co) : addDays(checkIn, 1); if (isNaN(checkOut.getTime()) || checkOut <= checkIn) checkOut = addDays(checkIn, 1);
   const guests = Math.min(8, Math.max(1, parseInt(params.get('guests') || '2') || 2));
   const pets = Math.min(2, Math.max(0, parseInt(params.get('pets') || '0') || 0));
-  return { checkIn, checkOut, guests, pets };
+  const children = Math.min(guests - 1, Math.max(0, parseInt(params.get('children') || '0') || 0));
+  const infants = Math.min(1, Math.max(0, parseInt(params.get('infants') || '0') || 0));
+  return { checkIn, checkOut, guests, pets, children, infants };
 }
 export function writeSearch(s: SearchState, extra: Record<string, string> = {}): string {
-  const p = new URLSearchParams({ checkIn: key(s.checkIn), checkOut: key(s.checkOut), guests: String(s.guests), pets: String(s.pets), ...extra });
+  const p = new URLSearchParams({ checkIn: key(s.checkIn), checkOut: key(s.checkOut), guests: String(s.guests), pets: String(s.pets), ...(s.children ? { children: String(s.children) } : {}), ...(s.infants ? { infants: String(s.infants) } : {}), ...extra });
   return p.toString();
 }
 
