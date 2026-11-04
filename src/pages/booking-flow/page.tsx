@@ -47,7 +47,8 @@ export default function BookingFlowPage() {
   const [downReason, setDownReason] = useState('');
   // Text the owner (through booking-site-health, at most once per 30 min) the first time a guest hits the backup.
   useEffect(() => {
-    if (!systemDown) return;
+    // Only the live site reports; test servers and previews never text the owner.
+    if (!systemDown || window.location.hostname !== 'roadhouse.milehigh.systems') return;
     const report = `${room?.name ?? 'room ' + roomId} ${checkIn} to ${checkOut}: ${downReason || 'unknown'}`;
     try { navigator.sendBeacon('https://txbebwaxaqvxxjcmftjt.supabase.co/functions/v1/booking-site-health', new Blob([JSON.stringify({ report })], { type: 'text/plain' })); } catch { /* best effort */ }
   }, [systemDown]);
