@@ -571,7 +571,7 @@ export default function BookingFlowPage() {
               <label>First name<input required name="firstName" autoComplete="given-name" placeholder="First" value={formData.firstName} onChange={handleInputChange} /></label>
               <label>Last name<input required name="lastName" autoComplete="family-name" placeholder="Last" value={formData.lastName} onChange={handleInputChange} /></label>
             </div>
-            <label>Email<input required type="email" name="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} /></label>
+            <label>Email<input required type="email" name="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} onBlur={() => (window as unknown as { MHRecover?: { identify: (e: string, f?: string) => void } }).MHRecover?.identify(formData.email, formData.firstName)} /></label>
             <label>Phone, for your door code<input required type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="(303) 555 0100" value={formData.phone} onChange={handleInputChange} /></label>
             <label>Anything we should know<textarea name="specialRequests" placeholder="Arrival time, pets, questions" value={formData.specialRequests} onChange={handleInputChange} /></label>
 

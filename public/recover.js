@@ -131,7 +131,15 @@
       window.mhrConsent = false;
     },
     bookingStarted: function (meta) { send('booking_started', meta); },
-    booked: function (meta) { send('booked', meta); }
+    booked: function (meta) { send('booked', meta); },
+    // First party email capture: the email a guest types at checkout, sent once per address.
+    // Same consent rule as everything else (nothing is sent after No thanks or GPC).
+    identify: function (email, firstName) {
+      email = String(email || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || window.mhrIdentified === email) return;
+      window.mhrIdentified = email;
+      send('identify', { email: email, first_name: firstName || null });
+    }
   };
 
   function track() { send(isBookingPage() ? 'booking_page' : 'pageview'); }
