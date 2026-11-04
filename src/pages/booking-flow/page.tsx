@@ -44,10 +44,11 @@ export default function BookingFlowPage() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   // Backup path (owner, 2026-11-03): when the payment form, prices or the booking server fail, offer phone and text.
   const [systemDown, setSystemDown] = useState(false);
+  const [downReason, setDownReason] = useState('');
   // Text the owner (through booking-site-health, at most once per 30 min) the first time a guest hits the backup.
   useEffect(() => {
     if (!systemDown) return;
-    const report = `${room?.name ?? 'room ' + roomId} ${checkIn} to ${checkOut}: ${paymentError ?? 'prices or payment did not load'}`;
+    const report = `${room?.name ?? 'room ' + roomId} ${checkIn} to ${checkOut}: ${downReason || 'unknown'}`;
     try { navigator.sendBeacon('https://txbebwaxaqvxxjcmftjt.supabase.co/functions/v1/booking-site-health', new Blob([JSON.stringify({ report })], { type: 'text/plain' })); } catch { /* best effort */ }
   }, [systemDown]);
   const [squareCard, setSquareCard] = useState<any>(null);
@@ -183,7 +184,7 @@ export default function BookingFlowPage() {
       if (!(window as any).Square) {
         console.error('Square.js failed to load after waiting');
         setPaymentError('Payment system failed to load. Please refresh the page.');
-        setSystemDown(true);
+        setDownReason('Square did not load in this browser (often an ad blocker)'); setSystemDown(true);
         setIsInitializingSquare(false);
         return;
       }
@@ -207,7 +208,7 @@ export default function BookingFlowPage() {
     } catch (error) {
       console.error('Failed to initialize Square payment:', error);
       setPaymentError('Failed to initialize payment form. Please refresh the page.');
-      setSystemDown(true);
+      setDownReason('Square payment form failed to start'); setSystemDown(true);
     } finally {
       setIsInitializingSquare(false);
     }
@@ -220,20 +221,21 @@ export default function BookingFlowPage() {
 
       setIsLoadingPricing(true);
       try {
-        const result = await AvailabilityService.checkAvailability({
-          checkIn,
-          checkOut,
-          guests
-        });
+        let result = await AvailabilityService.checkAvailability({ checkIn, checkOut, guests });
+        // One retry before calling the site down: a phone can drop a single request.
+        if (!result.success && result.serverDown) {
+          await new Promise(r => setTimeout(r, 2000));
+          result = await AvailabilityService.checkAvailability({ checkIn, checkOut, guests });
+        }
 
         if (result.success && result.rooms) {
           const thisRoom = result.rooms.find(r => r.roomId === room.id);
           console.log('Booking pricing data:', thisRoom);
           setPricingData(thisRoom?.pricing || null);
-        } else setSystemDown(true);
+        } else if (result.serverDown) { setDownReason('prices did not load (server)'); setSystemDown(true); }
       } catch (error) {
         console.error('Failed to fetch pricing:', error);
-        setSystemDown(true);
+        setDownReason('prices did not load'); setSystemDown(true);
       } finally {
         setIsLoadingPricing(false);
       }
@@ -415,7 +417,7 @@ export default function BookingFlowPage() {
       }
     } catch (error: any) {
       console.error('Payment error:', error);
-      setSystemDown(true);
+      setDownReason('booking server did not answer at payment'); setSystemDown(true);
       const msg = error.message || 'An unexpected error occurred. Please try again.';
       if (!suppress) setPaymentError(msg);
       return { ok: false, retriable: true, message: msg };

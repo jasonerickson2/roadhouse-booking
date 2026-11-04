@@ -72,6 +72,7 @@ export interface AvailabilityResponse {
   success: boolean;
   rooms: RoomAvailability[];
   error?: string;
+  serverDown?: boolean;   // true only for network errors, timeouts and 5xx, not refusals like past dates
 }
 
 // Supabase booking API base URL
@@ -175,6 +176,7 @@ export class AvailabilityService {
       });
 
       if (!response.ok) {
+        if (response.status < 500) return { success: false, rooms: [], error: `Availability API refused: ${response.status}`, serverDown: false };
         throw new Error(`Availability API failed: ${response.status}`);
       }
 
@@ -191,7 +193,8 @@ export class AvailabilityService {
       return {
         success: false,
         rooms: [],
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        serverDown: true
       };
     }
   }
