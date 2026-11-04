@@ -142,6 +142,8 @@ footer strong{color:#fff}
 footer .cols{display:grid;grid-template-columns:1fr;gap:16px}
 footer .legal{margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:12px;color:#9C958A;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .sticky{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+.sticky.room-bar{transition:transform .2s ease}
+.sticky.room-bar.away{transform:translateY(110%);pointer-events:none}
 .sticky .l{display:flex;flex-direction:column;line-height:1.2}
 .sticky .l b{font-size:17px}
 .sticky .l span{font-size:12px;color:var(--muted)}

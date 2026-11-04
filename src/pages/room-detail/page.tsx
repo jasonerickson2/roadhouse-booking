@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { rooms } from '../../mocks/rooms';
 import Footer from '../../components/feature/Footer';
 import RangeCalendar from '../../components/base/RangeCalendar';
@@ -15,7 +15,6 @@ export default function RoomDetailPage() {
   const meta = metaById(roomId);
   const mock = rooms.find(r => r.id === roomId);
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
   const search = readSearch(params);
   const nights = nightsBetween(search.checkIn, search.checkOut);
   const { rooms: avail, loading, error } = useAvailability(search);
@@ -31,6 +30,18 @@ export default function RoomDetailPage() {
   const [offer, setOffer] = useState<AddOnOffer>({ early: true, late: true, fee: 0 });
   useEffect(() => { let on = true; fetchAddOnOffer(roomId, key(search.checkIn), key(search.checkOut)).then(o => { if (on) setOffer(o); }); return () => { on = false; }; }, [roomId, key(search.checkIn), key(search.checkOut)]);
   useEffect(() => { const f = () => setWide(window.innerWidth >= 700); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f); }, []);
+  // Mobile: the bottom Reserve bar hides while the price box (dates, add ons, Reserve) is on screen, and its button
+  // scrolls to that box instead of skipping straight to checkout, so guests see early check in and late checkout first.
+  const [boxInView, setBoxInView] = useState(false);
+  useEffect(() => {
+    if (wide) { setBoxInView(false); return; }
+    const el = document.getElementById('pbox-mobile');
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(([e]) => setBoxInView(e.isIntersecting), { threshold: 0.15 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [wide, meta?.id]);
+  const toBox = () => document.getElementById('pbox-mobile')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   if (!meta || !mock) return <div className="wrap" style={{ padding: 40 }}><p>Room not found.</p><Link to="/">All rooms</Link></div>;
 
@@ -108,12 +119,12 @@ export default function RoomDetailPage() {
           </div>
           {wide && <div className="pcol">{priceBox}</div>}
         </div>
-        {!wide && <div style={{ marginTop: 8, marginBottom: 32 }} id="pbox-mobile">{priceBox}</div>}
+        {!wide && <div style={{ marginTop: 8, marginBottom: 32, scrollMarginTop: 72 }} id="pbox-mobile">{priceBox}</div>}
       </div>
       <Footer />
-      <div className="sticky room-bar">
-        {st === 'fits' ? <><div className="l"><b>{fmt(total)}</b><span>{nights} night{nights > 1 ? 's' : ''}, all in</span></div><button className="btn btn-wood" onClick={() => navigate(reserveTo)}>Reserve</button></>
-          : <><div className="l"><b>{st === 'booked' ? 'Booked' : st === 'loading' ? 'Checking…' : 'Not available'}</b><span>{nice(search.checkIn)} to {nice(search.checkOut)}</span></div><a className="btn btn-line" href="#pbox-mobile">Open dates</a></>}
+      <div className={'sticky room-bar' + (boxInView ? ' away' : '')} aria-hidden={boxInView}>
+        {st === 'fits' ? <><div className="l"><b>{fmt(total)}</b><span>{nights} night{nights > 1 ? 's' : ''}, all in</span></div><button className="btn btn-wood" onClick={toBox} tabIndex={boxInView ? -1 : 0}>Reserve</button></>
+          : <><div className="l"><b>{st === 'booked' ? 'Booked' : st === 'loading' ? 'Checking…' : 'Not available'}</b><span>{nice(search.checkIn)} to {nice(search.checkOut)}</span></div><button className="btn btn-line" onClick={toBox} tabIndex={boxInView ? -1 : 0}>Open dates</button></>}
       </div>
     </>
   );
