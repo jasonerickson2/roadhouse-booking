@@ -61,6 +61,7 @@ export default function BookingFlowPage() {
   const walletsInitedRef = useRef(false);
   const submitInFlightRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const startedSentRef = useRef(false);
 
   // Confirmation data
   const [confirmationData, setConfirmationData] = useState<any>(null);
@@ -297,6 +298,11 @@ export default function BookingFlowPage() {
     if (gate) { setPaymentError(gate); return { ok: false, retriable: false, message: gate }; }
     submitInFlightRef.current = true;
     let submitSucceeded = false;
+    // Funnel: Pay clicked (card, Apple Pay or Google Pay) and the guest form passed. Sent once per page view.
+    if (!startedSentRef.current) {
+      startedSentRef.current = true;
+      (window as unknown as { MHRecover?: { bookingStarted: (m: Record<string, unknown>) => void } }).MHRecover?.bookingStarted({ room: roomId, check_in: checkIn, check_out: checkOut, amount_cents: Math.round(grandTotal * 100) });
+    }
     setIsProcessingPayment(true);
     setPaymentError(null);
 
@@ -587,7 +593,7 @@ export default function BookingFlowPage() {
               <label>Last name<input required name="lastName" autoComplete="family-name" placeholder="Last" value={formData.lastName} onChange={handleInputChange} /></label>
             </div>
             <label>Email<input required type="email" name="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} onBlur={() => (window as unknown as { MHRecover?: { identify: (e: string, f?: string) => void } }).MHRecover?.identify(formData.email, formData.firstName)} /></label>
-            <label>Phone, for your door code<input required type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="(303) 555 0100" value={formData.phone} onChange={handleInputChange} /></label>
+            <label>Phone, for your door code and booking texts<input required type="tel" name="phone" inputMode="tel" autoComplete="tel" placeholder="(303) 555 0100" value={formData.phone} onChange={handleInputChange} /></label>
             <label>Anything we should know<textarea name="specialRequests" placeholder="Arrival time, pets, questions" value={formData.specialRequests} onChange={handleInputChange} /></label>
 
             <label className="chk">
