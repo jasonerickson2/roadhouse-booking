@@ -42,6 +42,8 @@ export default function HomePage() {
   const { calendars, loading: calLoading } = useCalendars();
   const [calOpen, setCalOpen] = useState(false);
   const calRef = useRef<HTMLFormElement>(null);
+  // Results start with the availability calendar at the top of the screen, rooms right below it.
+  const showResults = () => { const el = document.querySelector('.ag'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 12, behavior: 'smooth' }); };
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
   // Nights no room can host: blocked on every calendar we have. Shown struck through in the search picker.
   const allBlocked = (() => {
@@ -123,7 +125,7 @@ export default function HomePage() {
       </section>
 
       <section className="wrap" id="search">
-        <form className="searchbox" ref={calRef} onSubmit={e => { e.preventDefault(); document.getElementById('stays')?.scrollIntoView({ behavior: 'smooth' }); }}>
+        <form className="searchbox" ref={calRef} onSubmit={e => { e.preventDefault(); showResults(); }}>
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setCalOpen(o => !o)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setCalOpen(o => !o)}>{nice(search.checkOut)}</button></div>
           <div className="field"><label htmlFor="guests">Guests</label>
@@ -131,7 +133,7 @@ export default function HomePage() {
           <div className="field"><label htmlFor="pets">Pets</label>
             <select id="pets" value={search.pets} onChange={e => update({ pets: parseInt(e.target.value) })}><option value={0}>No pets</option><option value={1}>1 pet</option><option value={2}>2 pets</option></select></div>
           <button className="btn go" type="submit">Show prices</button>
-          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setTimeout(() => document.getElementById('stays')?.scrollIntoView({ behavior: 'smooth' }), 50); }} />}
+          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setTimeout(showResults, 50); }} />}
         </form>
         <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} guests={search.guests} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id)!; navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, minStay(m, calendars[id], d)) })}`); }} />
       </section>
