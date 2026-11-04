@@ -1,11 +1,13 @@
-/*  MileHigh Recover pixel  v0.2 (2026-11-03: location via recover.milehigh.systems/c, plus timezone,
+/*  MileHigh Recover pixel  v0.3 (2026-11-03, owner decision): notice mode. Visitors are tracked unless they click
+ *  No thanks or send Global Privacy Control. Visitors in a Pacific timezone (possible California) are opt in:
+ *  nothing is sent until they click Okay.
+ *  v0.2 (2026-11-03: location via recover.milehigh.systems/c, plus timezone,
  *  device type, first touch source and trip details from the page's own search fields)
  *  Install: <script src="https://api.milehigh.systems/recover.js" data-key="YOUR_PIXEL_KEY" defer></script>
  *
  *  Rules this script enforces, on purpose:
- *   1. Nothing is sent until the visitor has affirmatively consented. We look for a
- *      first party cookie `mhr_consent=1`, a `window.mhrConsent === true` flag the site's
- *      consent banner can set, or a prior consent event. No banner click, no network call.
+ *   1. No thanks (cookie mhr_consent=0) stops everything, for good. Pacific timezone visitors send nothing
+ *      until they click Okay (mhr_consent=1). Everyone else is tracked with a visible notice.
  *   2. Global Privacy Control (navigator.globalPrivacyControl) is honored as a hard opt out.
  *   3. The only identifier we create is a random first party id in a cookie we own.
  *      No fingerprinting, no reading other cookies, no form scraping.
@@ -41,8 +43,14 @@
       '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax' +
       (location.protocol === 'https:' ? '; Secure' : '');
   }
+  function optInRequired() {
+    try { return /^America\/(Los_Angeles|Tijuana)$/.test(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch (e) { return true; }
+  }
   function hasConsent() {
-    return window.mhrConsent === true || getCookie('mhr_consent') === '1';
+    var c = getCookie('mhr_consent');
+    if (c === '0' || window.mhrConsent === false) return false;
+    if (c === '1' || window.mhrConsent === true) return true;
+    return !optInRequired();
   }
   function visitorId() {
     var v = getCookie('mhr_vid');
@@ -82,7 +90,7 @@
   }
   function ctx() {
     var tz = null; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
-    return { tz: tz, device: device(), source: source(), landing: getCookie('mhr_land'), trip: trip() };
+    return { tz: tz, device: device(), source: source(), landing: getCookie('mhr_land'), trip: trip(), mode: getCookie('mhr_consent') === '1' ? 'opt_in' : 'notice' };
   }
   function send(kind, extra) {
     if (!hasConsent()) return;
@@ -111,11 +119,13 @@
   // Public API the site's consent banner calls.
   window.MHRecover = {
     consent: function () {
+      var already = hasConsent();
       setCookie('mhr_consent', '1', 365);
       window.mhrConsent = true;
       send('consent');
-      track();
+      if (!already) track();
     },
+    mode: function () { return optInRequired() ? 'opt_in' : 'notice'; },
     revoke: function () {
       setCookie('mhr_consent', '0', 365);
       window.mhrConsent = false;

@@ -86,9 +86,10 @@ export default function HomePage() {
     if (st === 'loading') line = <span className="spec">Checking price…</span>;
     else if (st === 'fits') line = <><span className="price"><b>{fmt(preTax)}</b> <span className="spec">total before taxes</span><br /><span className="spec sub">{fmt(avgNight)} avg a night · {nights} night{nights > 1 ? 's' : ''} · includes cleaning{search.pets > 0 ? ' and pet fee' : ''}</span></span><span className="ok">Open for your dates</span></>;
     else if (st === 'booked') { badge = <span className="badge gray">Booked for these dates</span>; line = <><span className="price"><span className="spec">from</span> <b>{fmt(nightly)}</b> <span className="spec">a night</span></span><span className="no">Tap to see open dates</span></>; }
+    else if (st === 'guests') { badge = <span className="badge gray">Too small for {search.guests} guests</span>; line = <><span className="price"><span className="spec">Sleeps up to {meta.sleeps}</span></span><span className="no">Change guests to book this room</span></>; }
     else line = <><span className="price"><b>{fmt(nightly)}</b> <span className="spec">a night{meta.minNights > 1 ? `, ${meta.minNights} night minimum` : ''}</span></span><span className="no">{st === 'guests' ? `Sleeps up to ${meta.sleeps}` : `${meta.minNights} night minimum`}</span></>;
     return (
-      <Link className={'card' + (st === 'booked' ? ' booked' : '')} to={`/room/${meta.id}?${writeSearch(search)}`} style={wideCard ? { gridColumn: '1 / -1', maxWidth: 720, width: '100%', margin: '0 auto' } : undefined}>
+      <Link className={'card' + (st === 'booked' || st === 'guests' ? ' booked' : '')} to={`/room/${meta.id}?${writeSearch(search)}`} style={wideCard ? { gridColumn: '1 / -1', maxWidth: 720, width: '100%', margin: '0 auto' } : undefined}>
         <img src={mock.image} alt={meta.short} loading="lazy" />{badge}
         <div className="body">
           <div className="row"><span className="name">{meta.short}</span><span className="rating"><b>★</b> {mock.rating.toFixed(2)} · {mock.reviews} reviews</span></div>

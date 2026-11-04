@@ -28,7 +28,7 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
   const priceOf = (id: number, k: string) => calendars[id]?.priceByDate?.[k];
 
   const openPrices: number[] = [];
-  for (const s of STAY_META) for (const d of days) { const k = key(d); const p = priceOf(s.id, k); if (p && !isBooked(s.id, k)) openPrices.push(p); }
+  for (const s of STAY_META) if (s.sleeps >= guests) for (const d of days) { const k = key(d); const p = priceOf(s.id, k); if (p && !isBooked(s.id, k)) openPrices.push(p); }
   const lowest = openPrices.length ? Math.min(...openPrices) : null;
   const canBack = offset > 0 && start > t;
   const stayNights: string[] = [];
@@ -61,13 +61,16 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
             const known = !!calendars[s.id];
             const small = s.sleeps < guests;
             // Highlight the stay only on rooms that can actually take it: every night open, minimum met, sleeps enough.
-            const fits = known && !small && nightsBetween(checkIn, checkOut) >= s.minNights && !stayNights.some(k => isBooked(s.id, k));
+            const stayOpen = known && !stayNights.some(k => isBooked(s.id, k));
+            const tooShort = stayOpen && !small && nightsBetween(checkIn, checkOut) < s.minNights;
+            const fits = stayOpen && !small && !tooShort;
             return [
-              <div className={'ag-room' + (small ? ' dim' : '')} key={'n' + s.id}>{s.short.replace('The ', '')}<small>{small ? `Too small for ${guests}` : `Sleeps ${s.sleeps}${s.minNights > 1 ? ` · ${s.minNights} night min` : ''}`}</small></div>,
+              <div className={'ag-room' + (small ? ' dim' : '')} key={'n' + s.id}>{s.short.replace('The ', '')}<small className={tooShort ? 'warn' : ''}>{small ? `Too small for ${guests}` : tooShort ? `Your dates are short of its ${s.minNights} night minimum` : `Sleeps ${s.sleeps}${s.minNights > 1 ? ` · ${s.minNights} night min` : ''}`}</small></div>,
               ...days.map(d => {
                 const k = key(d); const b = isBooked(s.id, k); const p = priceOf(s.id, k);
-                const sel = fits && d >= checkIn && d < checkOut;
-                const cls = 'ag-c' + (!known ? ' unk' : b ? ' b' : '') + (small ? ' dim' : '') + (sel && !b ? ' sel' : '') + (!b && p && p === lowest && !sel ? ' low' : '');
+                const inStay = d >= checkIn && d < checkOut;
+                const sel = fits && inStay;
+                const cls = 'ag-c' + (!known ? ' unk' : b ? ' b' : '') + (small ? ' dim' : '') + (tooShort && inStay && !b ? ' short' : '') + (sel && !b ? ' sel' : '') + (!b && p && p === lowest && !sel ? ' low' : '');
                 const label = `${s.short.replace('The ', '')}, ${nice(d)}, ${!known ? 'loading' : b ? 'booked' : p ? money(p) + ' per night' : 'open'}`;
                 return (!known || b || small)
                   ? <div key={s.id + k} className={cls} title={label} aria-label={label} />

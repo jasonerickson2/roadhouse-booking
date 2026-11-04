@@ -31,21 +31,30 @@
     <script src="/recover.js" data-key="8cb0d0189727d3205a24c86c62f5d187" defer></script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <!-- MileHigh Recover consent banner -->
-    <div id="mhr-banner" style="position:fixed;bottom:0;left:0;right:0;background:#2b2118;color:#F5EDE4;padding:14px 20px;font:14px/1.4 Montserrat,system-ui,sans-serif;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;z-index:9999;box-shadow:0 -2px 12px rgba(0,0,0,.25)">
-      <span>We use cookies to remember your booking and, with your okay, to check in if you don't finish it.</span>
-      <button onclick="window.MHRecover&&MHRecover.consent();document.getElementById('mhr-banner').remove();document.cookie='mhr_banner=1; max-age=31536000; path=/'" style="background:#F5EDE4;color:#2b2118;border:0;padding:9px 16px;border-radius:6px;font-weight:700;cursor:pointer">Okay</button>
-      <button onclick="window.MHRecover&&MHRecover.revoke();document.getElementById('mhr-banner').remove();document.cookie='mhr_banner=1; max-age=31536000; path=/'" style="background:transparent;color:#F5EDE4;border:1px solid #F5EDE4;padding:9px 16px;border-radius:6px;cursor:pointer">No thanks</button>
+    <!-- MileHigh Recover notice (v0.3): slim strip at the top that pushes the page down.
+         Most visitors: notice with Got it / No thanks. Pacific timezone: nothing is tracked until Okay. -->
+    <div id="mhr-banner" hidden style="background:#0D2123;color:#F5F1E8;font:13px/1.4 Montserrat,system-ui,sans-serif;padding:9px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap">
+      <span id="mhr-text"></span>
+      <span style="display:flex;gap:8px">
+        <button id="mhr-yes" style="background:#F5F1E8;color:#0D2123;border:0;padding:6px 14px;border-radius:999px;font:inherit;font-weight:700;cursor:pointer"></button>
+        <button id="mhr-no" style="background:transparent;color:#F5F1E8;border:1px solid rgba(245,241,232,.6);padding:6px 14px;border-radius:999px;font:inherit;cursor:pointer">No thanks</button>
+      </span>
     </div>
     <script>
-      (function(){var b=document.getElementById('mhr-banner');if(!b)return;
+      (function(){var b=document.getElementById('mhr-banner');
         if(document.cookie.indexOf('mhr_banner=1')>-1){b.remove();return;}
-        // Keep the notice out of the way of the date picker and the payment form.
-        var obs=new MutationObserver(function(){var busy=document.querySelector('.cal.open, .rc-modal, #card-container, .sq-card-wrapper');b.style.display=busy?'none':'';});
-        obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+        var optIn;try{optIn=/^America\/(Los_Angeles|Tijuana)$/.test(Intl.DateTimeFormat().resolvedOptions().timeZone);}catch(e){optIn=true;} // same rule as recover.js; that script is deferred and not loaded yet
+        document.getElementById('mhr-text').innerHTML=optIn
+          ?'May we use cookies to remember your booking and check in by email if you don\u2019t finish? <a href="/terms#cookies" style="color:inherit">Details</a>'
+          :'We use cookies to remember your booking and may check in by email if you don\u2019t finish. <a href="/terms#cookies" style="color:inherit">Details</a>';
+        document.getElementById('mhr-yes').textContent=optIn?'Okay':'Got it';
+        function done(){b.remove();document.cookie='mhr_banner=1; max-age=31536000; path=/; SameSite=Lax';}
+        document.getElementById('mhr-yes').onclick=function(){if(optIn&&window.MHRecover)MHRecover.consent();done();};
+        document.getElementById('mhr-no').onclick=function(){if(window.MHRecover)MHRecover.revoke();done();};
+        b.hidden=false;
       })();
     </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
