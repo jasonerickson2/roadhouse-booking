@@ -42,6 +42,8 @@ export default function BookingFlowPage() {
   // Payment state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  // Backup path (owner, 2026-11-03): when the payment form, prices or the booking server fail, offer phone and text.
+  const [systemDown, setSystemDown] = useState(false);
   const [squareCard, setSquareCard] = useState<any>(null);
   const [isInitializingSquare, setIsInitializingSquare] = useState(false);
   const [storeCard, setStoreCard] = useState(true);
@@ -175,6 +177,7 @@ export default function BookingFlowPage() {
       if (!(window as any).Square) {
         console.error('Square.js failed to load after waiting');
         setPaymentError('Payment system failed to load. Please refresh the page.');
+        setSystemDown(true);
         setIsInitializingSquare(false);
         return;
       }
@@ -198,6 +201,7 @@ export default function BookingFlowPage() {
     } catch (error) {
       console.error('Failed to initialize Square payment:', error);
       setPaymentError('Failed to initialize payment form. Please refresh the page.');
+      setSystemDown(true);
     } finally {
       setIsInitializingSquare(false);
     }
@@ -220,9 +224,10 @@ export default function BookingFlowPage() {
           const thisRoom = result.rooms.find(r => r.roomId === room.id);
           console.log('Booking pricing data:', thisRoom);
           setPricingData(thisRoom?.pricing || null);
-        }
+        } else setSystemDown(true);
       } catch (error) {
         console.error('Failed to fetch pricing:', error);
+        setSystemDown(true);
       } finally {
         setIsLoadingPricing(false);
       }
@@ -404,6 +409,7 @@ export default function BookingFlowPage() {
       }
     } catch (error: any) {
       console.error('Payment error:', error);
+      setSystemDown(true);
       const msg = error.message || 'An unexpected error occurred. Please try again.';
       if (!suppress) setPaymentError(msg);
       return { ok: false, retriable: true, message: msg };
@@ -582,6 +588,11 @@ export default function BookingFlowPage() {
 
             {paymentError && (
               <div className="note" role="alert" style={{ background: '#F6E3DF', color: '#7A2E22' }}>{paymentError}</div>
+            )}
+            {systemDown && (
+              <div className="note backup" role="status">
+                <b>Online booking is having trouble right now.</b> Book by phone or text and we'll hold your dates: <a href="tel:+17192252364">719 225 2364</a> (<a href="sms:+17192252364">text</a>). Your card has not been charged. You can also use our <a href="https://roadhouse-booking.hostexbooking.site/" target="_blank" rel="noopener">backup booking page</a>.
+              </div>
             )}
 
             {wallets.applePay && (
