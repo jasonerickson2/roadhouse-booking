@@ -6,7 +6,7 @@ import RangeCalendar from '../../components/base/RangeCalendar';
 import Lightbox from '../../components/base/Lightbox';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
 import { fetchAddOnOffer, type AddOnOffer } from '../../services/availability';
-import { addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState, EARLY_LABEL, LATE_LABEL, minStay } from '../../lib/booking';
+import { petNotice, addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState, EARLY_LABEL, LATE_LABEL, minStay } from '../../lib/booking';
 import { stayStatus } from '../home/page';
 
 export default function RoomDetailPage() {
@@ -46,7 +46,7 @@ export default function RoomDetailPage() {
   const earlyAllowed = offer.early && addDays(search.checkIn, 0) >= new Date(new Date().setHours(0, 0, 0, 0));
   const lateAllowed = offer.late;
   const offered = meta.addOnFee > 0;
-  const x: Extras = { pets: search.pets, earlyHours: offered && earlyAllowed ? earlyHours : 0, late: offered && lateAllowed && late };
+  const x: Extras = { checkIn: search.checkIn, pets: search.pets, earlyHours: offered && earlyAllowed ? earlyHours : 0, late: offered && lateAllowed && late };
   const ex = extrasTotal(meta, x);
   const p = r?.pricing;
   const total = (p?.totalAmount || 0) + ex.total;
@@ -66,6 +66,7 @@ export default function RoomDetailPage() {
         <div className="line"><span>{fmt((p?.baseRate || 0) / Math.max(1, nights))} × {nights} night{nights > 1 ? 's' : ''}</span><span>{fmt(p?.baseRate || 0)}</span></div>
         <div className="line"><span>Cleaning</span><span>{fmt(p?.cleaningFee || 0)}</span></div>
         {ex.pet > 0 && <div className="line"><span>Pet fee, per stay</span><span>{fmt(ex.pet)}</span></div>}
+        {ex.pet > 0 && <p className="fine pet-note">{petNotice(meta, search.checkIn)}</p>}
         {offered && (earlyAllowed || lateAllowed) && <div className="fine" style={{ marginTop: 4 }}>Add ons for this stay</div>}
         {offered && earlyAllowed && <div className="addon"><label><input type="checkbox" checked={x.earlyHours > 0} onChange={e => setExtra({ earlyHours: e.target.checked ? 2 : 0 })} /><span>Early check in, {EARLY_LABEL}<small>Flat {fmt(meta.addOnFee)}</small></span></label><b>{fmt(meta.addOnFee)}</b></div>}
         {offered && lateAllowed && <div className="addon"><label><input type="checkbox" checked={x.late} onChange={e => setExtra({ late: e.target.checked })} /><span>Late checkout, {LATE_LABEL}<small>Flat {fmt(meta.addOnFee)}</small></span></label><b>{fmt(meta.addOnFee)}</b></div>}
@@ -102,7 +103,7 @@ export default function RoomDetailPage() {
             <div className="rule"><div className={'desc' + (moreDesc ? '' : ' clamp')}>{paras.map((t, i) => <p key={i} style={{ margin: '0 0 10px' }}>{t.replace(/^• /, '· ')}</p>)}</div><button className="more" type="button" onClick={() => setMoreDesc(m => !m)}>{moreDesc ? 'Show less' : 'Show more'}</button></div>
             <div className="rule"><h3>What you get</h3><div className="ams">{(allAms ? mock.amenities : mock.amenities.slice(0, 6)).map(a => <span key={a}>{a}</span>)}</div>{mock.amenities.length > 6 && !allAms && <button className="more" type="button" onClick={() => setAllAms(true)}>Show all {mock.amenities.length}</button>}</div>
             <div className="rule"><h3>Where you sleep</h3><ul className="list">{mock.bedTypes.map(b => <li key={b.bedroom}>{b.bedroom}: {b.beds}</li>)}</ul></div>
-            <div className="rule"><h3>Good to know</h3><ul className="list"><li>Self check in. Door code by text at 4pm the day before.</li><li>In from 4pm, out by 10am.{offered ? ` Early check in (${EARLY_LABEL}) or late checkout (${LATE_LABEL}) for ${fmt(meta.addOnFee)} when the room is free.` : ''}</li><li>Pets welcome, {fmt(meta.petFee)} per stay, up to {meta.maxPets}.</li>{rules.map(rl => <li key={rl}>{rl}</li>)}</ul></div>
+            <div className="rule"><h3>Good to know</h3><ul className="list"><li>Self check in. Door code by text at 4pm the day before.</li><li>In from 4pm, out by 10am.{offered ? ` Early check in (${EARLY_LABEL}) or late checkout (${LATE_LABEL}) for ${fmt(meta.addOnFee)} when the room is free.` : ''}</li><li>Pets welcome, {meta.petFee === meta.petFeeWinter ? `${fmt(meta.petFee)} per stay` : `${fmt(meta.petFee)} per stay in summer, ${fmt(meta.petFeeWinter)} in winter`}, up to {meta.maxPets}.</li>{rules.map(rl => <li key={rl}>{rl}</li>)}</ul></div>
             <div className="rule" id="policy"><h3>Cancellation</h3><p style={{ margin: 0, fontSize: 14 }}>{pol.rules.slice(0, 3).join('. ')}. Full terms shown before you reserve.</p></div>
           </div>
           {wide && <div className="pcol">{priceBox}</div>}

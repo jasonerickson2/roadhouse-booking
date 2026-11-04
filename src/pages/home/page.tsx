@@ -72,13 +72,13 @@ export default function HomePage() {
 
   function cardTotal(meta: StayMeta) {
     const r = byId(meta.id); if (!r?.pricing) return 0;
-    return r.pricing.totalAmount + extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false }).total;
+    return r.pricing.totalAmount + extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false, checkIn: search.checkIn }).total;
   }
   const openCount = STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').length;
   // Before taxes, with cleaning, pet and card processing in (FTC all in rule allows taxes to come later).
   function preTaxTotal(meta: StayMeta) {
     const r = byId(meta.id); if (!r?.pricing) return 0;
-    return cardTotal(meta) - r.pricing.taxTotal - extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false }).tax;
+    return cardTotal(meta) - r.pricing.taxTotal - extrasTotal(meta, { pets: search.pets, earlyHours: 0, late: false, checkIn: search.checkIn }).tax;
   }
   const cheapest = Math.min(...STAY_META.filter(m => stayStatus(m, search, byId(m.id), loading, calendars[m.id]) === 'fits').map(preTaxTotal));
 

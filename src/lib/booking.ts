@@ -13,7 +13,8 @@ export interface StayMeta {
   group: 'rooms' | 'suites' | 'house';
   sleeps: number;
   minNights: number;
-  petFee: number;          // per stay
+  petFee: number;          // per stay, summer (owner 2026-11-04: $100 lodge, $185 Grizzly)
+  petFeeWinter: number;    // per stay, winter (owner 2026-11-04: $75 lodge, Grizzly unchanged)
   maxPets: number;
   addOnFee: number;        // flat fee for early check in (2pm) or late checkout (11:30am). 0 = not offered
   addOnWeight: number;     // share of the lodge wide daily budget (ADDON_BUDGET_PER_DAY) this room uses
@@ -25,12 +26,12 @@ export interface StayMeta {
 }
 
 export const STAY_META: StayMeta[] = [
-  { id: 6, slug: 'room-1', name: 'Room 1', short: 'Room 1', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', minChildAge: 5, infants: false },
-  { id: 5, slug: 'room-2', name: 'Room 2', short: 'Room 2', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, minChildAge: 5, infants: false },
-  { id: 4, slug: 'room-3', name: 'Room 3', short: 'Room 3', kind: 'Lodge room', group: 'rooms', sleeps: 4, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, minChildAge: 5, infants: false },
-  { id: 2, slug: 'penthouse', name: 'Penthouse', short: 'Penthouse', kind: 'Entire apartment', group: 'suites', sleeps: 4, minNights: 1, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 2, minChildAge: 5, infants: false },
-  { id: 3, slug: 'carriage-house', name: 'Cabin 5 - The Carriage House', short: 'Carriage House', kind: 'Standalone suite', group: 'suites', sleeps: 2, minNights: 2, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', season: 'May to Oct', minChildAge: 2, infants: true },
-  { id: 1, slug: 'grizzly-maze', name: 'The Grizzly Maze', short: 'The Grizzly Maze', kind: 'Whole house', group: 'house', sleeps: 8, minNights: 3, petFee: 185, maxPets: 2, addOnFee: 0, addOnWeight: 0, tag: 'Whole house', minChildAge: 2, infants: true },
+  { id: 6, slug: 'room-1', name: 'Room 1', short: 'Room 1', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 100, petFeeWinter: 75, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', minChildAge: 5, infants: false },
+  { id: 5, slug: 'room-2', name: 'Room 2', short: 'Room 2', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 100, petFeeWinter: 75, maxPets: 2, addOnFee: 25, addOnWeight: 1, minChildAge: 5, infants: false },
+  { id: 4, slug: 'room-3', name: 'Room 3', short: 'Room 3', kind: 'Lodge room', group: 'rooms', sleeps: 4, minNights: 1, petFee: 100, petFeeWinter: 75, maxPets: 2, addOnFee: 25, addOnWeight: 1, minChildAge: 5, infants: false },
+  { id: 2, slug: 'penthouse', name: 'Penthouse', short: 'Penthouse', kind: 'Entire apartment', group: 'suites', sleeps: 4, minNights: 1, petFee: 100, petFeeWinter: 75, maxPets: 2, addOnFee: 25, addOnWeight: 2, minChildAge: 5, infants: false },
+  { id: 3, slug: 'carriage-house', name: 'Cabin 5 - The Carriage House', short: 'Carriage House', kind: 'Standalone suite', group: 'suites', sleeps: 2, minNights: 2, petFee: 100, petFeeWinter: 75, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', season: 'May to Oct', minChildAge: 2, infants: true },
+  { id: 1, slug: 'grizzly-maze', name: 'The Grizzly Maze', short: 'The Grizzly Maze', kind: 'Whole house', group: 'house', sleeps: 8, minNights: 3, petFee: 185, petFeeWinter: 185, maxPets: 2, addOnFee: 0, addOnWeight: 0, tag: 'Whole house', minChildAge: 2, infants: true },
 ];
 
 export const metaById = (id: number) => STAY_META.find(s => s.id === id);
@@ -96,10 +97,20 @@ export function policy(d: Date) {
 export const TAX_RATE = 0.029 + 0.04 + 0.019; // CO state, Lake County, lodging
 export const SERVICE_RATE = 0.02;
 
-export interface Extras { pets: number; earlyHours: 0 | 2; late: boolean; }
+export interface Extras { pets: number; earlyHours: 0 | 2; late: boolean; checkIn?: Date; }
+
+// Pet fee follows the season of the check in date (same seasons as the cancellation policy). booking-api charges the same.
+export function petFeeFor(meta: StayMeta, checkIn?: Date) { return season(checkIn ?? new Date()) === 'summer' ? meta.petFee : meta.petFeeWinter; }
+export function petNotice(meta: StayMeta, checkIn?: Date) {
+  const fee = fmt(petFeeFor(meta, checkIn));
+  if (meta.petFee === meta.petFeeWinter) return `Pet fee: ${fee} per stay, up to ${meta.maxPets} pets.`;
+  return season(checkIn ?? new Date()) === 'summer'
+    ? `Pet fee: ${fee} per stay, up to ${meta.maxPets} pets. Summer is our busiest season, with back to back guests and a lot of extra cleaning between them, so the pet fee is higher from Memorial Day weekend through October.`
+    : `Pet fee: ${fee} per stay in winter, up to ${meta.maxPets} pets.`;
+}
 
 export function extrasTotal(meta: StayMeta, x: Extras) {
-  const pet = x.pets > 0 ? meta.petFee : 0;
+  const pet = x.pets > 0 ? petFeeFor(meta, x.checkIn) : 0;
   const early = x.earlyHours > 0 && meta.addOnFee > 0 ? meta.addOnFee : 0;
   const late = x.late && meta.addOnFee > 0 ? meta.addOnFee : 0;
   const sub = pet + early + late;
@@ -108,7 +119,7 @@ export function extrasTotal(meta: StayMeta, x: Extras) {
 }
 export function extrasNote(meta: StayMeta, x: Extras) {
   const parts: string[] = [];
-  if (x.pets > 0) parts.push(`${x.pets} pet${x.pets > 1 ? 's' : ''} (${fmt(meta.petFee)})`);
+  if (x.pets > 0) parts.push(`${x.pets} pet${x.pets > 1 ? 's' : ''} (${fmt(petFeeFor(meta, x.checkIn))})`);
   if (x.earlyHours > 0 && meta.addOnFee > 0) parts.push(`Early check in ${EARLY_LABEL} (${fmt(meta.addOnFee)})`);
   if (x.late && meta.addOnFee > 0) parts.push(`Late checkout ${LATE_LABEL} (${fmt(meta.addOnFee)})`);
   return parts.join(', ');

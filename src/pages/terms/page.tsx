@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Footer from '../../components/feature/Footer';
-import { EARLY_LABEL, LATE_LABEL, STAY_META, fmt, policy, season } from '../../lib/booking';
+import { EARLY_LABEL, LATE_LABEL, policy, season } from '../../lib/booking';
 
 const SUMMER = policy(new Date(2026, 6, 1));
 const WINTER = policy(new Date(2026, 0, 15));
@@ -9,7 +9,6 @@ const WINTER = policy(new Date(2026, 0, 15));
 // authorization below is what guests agree to. Wording of that section is the owner approved checkout text.
 export default function TermsPage() {
   const now = season(new Date());
-  const lodgePet = STAY_META.find(m => m.group === 'rooms')?.petFee;
   return (<>
     <main className="policy-page terms">
       <h1>Booking terms</h1>
@@ -33,7 +32,7 @@ export default function TermsPage() {
       <p>Check in 4:00 PM, checkout before 10:00 AM. Your door code comes by text at 4pm the day before. Early check in ({EARLY_LABEL}) and late checkout ({LATE_LABEL}) are offered as add ons at checkout when available.</p>
 
       <h2>Pets</h2>
-      <p>Pets are welcome only where the room allows them and only when added at checkout, with a per stay pet fee{lodgePet ? ` (from ${fmt(lodgePet)})` : ''}. Unapproved pets are charged as an incidental.</p>
+      <p>Pets are welcome in every room, up to 2 per stay, when added at checkout. The pet fee is per stay: $100 in summer and $75 in winter at the lodge (Rooms 1 to 3, the Penthouse and the Carriage House), and $185 year round at the Grizzly Maze. Summer runs from the Saturday of Memorial Day weekend through October 31, our busiest season with back to back guests and a lot of extra cleaning. Unapproved pets are charged as an incidental.</p>
 
       <h2>House rules</h2>
       <p>No parties or events. No smoking. Adults and children count toward each stay's guest limit, and at least one adult must be on every booking. Rooms 1 to 3 and the Penthouse share walls, so children there must be 5 or older and infants are not allowed. The Carriage House and the Grizzly Maze welcome any age, with one infant under 2 per stay who does not count toward the limit. Each room's page lists its own house rules, and they are part of these terms.</p>

@@ -8,7 +8,7 @@ What changed in the site
 - Search state lives in the URL (checkIn, checkOut, guests, pets, early, late) so pages agree and links are shareable.
 
 Fees used by the client (src/lib/booking.ts)
-- Pet fee per stay: rooms $95, Penthouse $125, Carriage House $125, Grizzly $185 (from past reservations in Supabase; no config exists yet).
+- Pet fee per stay (owner decision 2026-11-04): pets allowed in every unit, up to 2. Lodge (Rooms 1 to 3, Penthouse, Carriage House) $100 summer, $75 winter; Grizzly $185 year round. Summer = Saturday of Memorial Day weekend through Oct 31, by check in date. booking-api v48 charges the same (petFeeFor).
 - Early check in per hour: rooms $15, Penthouse and Carriage $25, Grizzly $40. Max 2 hours (2pm).
 - Late checkout per hour: same rates, 1 hour (11am).
 - Cleaning, nightly rate and tax come from booking-api.

@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { rooms } from '../../mocks/rooms';
 import { AvailabilityService } from '../../services/availability';
 import Footer from '../../components/feature/Footer';
-import { extrasNote, extrasTotal, metaById, partyLabel, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
+import { petNotice, extrasNote, extrasTotal, metaById, partyLabel, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
 
 // Room to Hostex Property ID mapping
 const ROOM_HOSTEX_MAP: Record<number, number> = {
@@ -77,7 +77,7 @@ export default function BookingFlowPage() {
   const meta = room ? metaById(room.id) : undefined;
   const earlyHours = (parseInt(searchParams.get('early') || '0') ? 2 : 0) as 0 | 2;
   const late = searchParams.get('late') === '1';
-  const extras: Extras = { pets: search.pets, earlyHours, late };
+  const extras: Extras = { pets: search.pets, earlyHours, late, checkIn: search.checkIn };
   const ex = meta ? extrasTotal(meta, extras) : { pet: 0, early: 0, late: 0, sub: 0, tax: 0, fee: 0, total: 0 };
   const addOnNote = meta ? extrasNote(meta, extras) : '';
 
@@ -567,6 +567,7 @@ export default function BookingFlowPage() {
                   ))}
                   <div className="line"><span>Cleaning</span><span>{usd(cleaningFee)}</span></div>
                   {ex.pet > 0 && <div className="line"><span>Pet fee, per stay</span><span>{usd(ex.pet)}</span></div>}
+                  {ex.pet > 0 && meta && <p className="fine pet-note">{petNotice(meta, search.checkIn)}</p>}
                   {ex.early > 0 && <div className="line"><span>Early check in, {earlyLabel}</span><span>{usd(ex.early)}</span></div>}
                   {ex.late > 0 && <div className="line"><span>Late checkout, {LATE_LABEL}</span><span>{usd(ex.late)}</span></div>}
                   <div className="line"><span>Taxes and processing</span><span>{usd(taxesAndProcessing)}</span></div>
