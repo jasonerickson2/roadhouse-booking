@@ -5,7 +5,7 @@ const LOGO = 'https://static.wixstatic.com/media/78598d_1f820102874e4d1c95c1acb4
 export default function Header() {
   // On a room page, a Back to rooms button keeps the guest's dates, guests and pets.
   const loc = useLocation();
-  const onRoom = loc.pathname.startsWith('/room/');
+  const onRoom = loc.pathname.startsWith('/room/') || loc.pathname.startsWith('/booking-flow');
   return (
     <header>
       <a className="brand" href="https://www.roadhousetwinlakes.com/" aria-label="Roadhouse Twin Lakes home">
