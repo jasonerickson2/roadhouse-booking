@@ -19,15 +19,18 @@ export interface StayMeta {
   addOnWeight: number;     // share of the lodge wide daily budget (ADDON_BUDGET_PER_DAY) this room uses
   tag?: string;
   season?: string;
+  // Owner decision 2026-11-03: shared wall rooms take children 5 and up and no infants; Carriage House and Grizzly take any age.
+  minChildAge: number;
+  infants: boolean;
 }
 
 export const STAY_META: StayMeta[] = [
-  { id: 6, slug: 'room-1', name: 'Room 1', short: 'Room 1', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite' },
-  { id: 5, slug: 'room-2', name: 'Room 2', short: 'Room 2', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1 },
-  { id: 4, slug: 'room-3', name: 'Room 3', short: 'Room 3', kind: 'Lodge room', group: 'rooms', sleeps: 4, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1 },
-  { id: 2, slug: 'penthouse', name: 'Penthouse', short: 'Penthouse', kind: 'Entire apartment', group: 'suites', sleeps: 4, minNights: 1, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 2 },
-  { id: 3, slug: 'carriage-house', name: 'Cabin 5 - The Carriage House', short: 'Carriage House', kind: 'Standalone suite', group: 'suites', sleeps: 2, minNights: 2, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', season: 'May to Oct' },
-  { id: 1, slug: 'grizzly-maze', name: 'The Grizzly Maze', short: 'The Grizzly Maze', kind: 'Whole house', group: 'house', sleeps: 8, minNights: 3, petFee: 185, maxPets: 2, addOnFee: 0, addOnWeight: 0, tag: 'Whole house' },
+  { id: 6, slug: 'room-1', name: 'Room 1', short: 'Room 1', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', minChildAge: 5, infants: false },
+  { id: 5, slug: 'room-2', name: 'Room 2', short: 'Room 2', kind: 'Lodge room', group: 'rooms', sleeps: 2, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, minChildAge: 5, infants: false },
+  { id: 4, slug: 'room-3', name: 'Room 3', short: 'Room 3', kind: 'Lodge room', group: 'rooms', sleeps: 4, minNights: 1, petFee: 95, maxPets: 2, addOnFee: 25, addOnWeight: 1, minChildAge: 5, infants: false },
+  { id: 2, slug: 'penthouse', name: 'Penthouse', short: 'Penthouse', kind: 'Entire apartment', group: 'suites', sleeps: 4, minNights: 1, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 2, minChildAge: 5, infants: false },
+  { id: 3, slug: 'carriage-house', name: 'Cabin 5 - The Carriage House', short: 'Carriage House', kind: 'Standalone suite', group: 'suites', sleeps: 2, minNights: 2, petFee: 125, maxPets: 2, addOnFee: 25, addOnWeight: 1, tag: 'Guest favorite', season: 'May to Oct', minChildAge: 2, infants: true },
+  { id: 1, slug: 'grizzly-maze', name: 'The Grizzly Maze', short: 'The Grizzly Maze', kind: 'Whole house', group: 'house', sleeps: 8, minNights: 3, petFee: 185, maxPets: 2, addOnFee: 0, addOnWeight: 0, tag: 'Whole house', minChildAge: 2, infants: true },
 ];
 
 export const metaById = (id: number) => STAY_META.find(s => s.id === id);

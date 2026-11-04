@@ -18,7 +18,7 @@ const REVIEWS: { text: string; who: string }[] = [
 // Hero follows the season of the dates being searched (a June search shows summer).
 const heroFor = (d: Date) => (season(d) === 'winter' ? '/img/hero-winter.jpg' : '/img/hero-summer.jpg');
 
-type Status = 'fits' | 'booked' | 'guests' | 'min' | 'loading';
+type Status = 'fits' | 'booked' | 'guests' | 'infant' | 'min' | 'loading';
 
 export function stayStatus(meta: StayMeta, s: SearchState, r: RoomAvailability | undefined, loading: boolean, cal?: RoomCalendar): Status {
   if (loading || !r) return 'loading';
@@ -29,6 +29,7 @@ export function stayStatus(meta: StayMeta, s: SearchState, r: RoomAvailability |
     for (let d = new Date(s.checkIn); d < s.checkOut; d = addDays(d, 1)) if (cal.blockedDates.has(key(d))) return 'booked';
   }
   if (meta.sleeps < s.guests) return 'guests';
+  if (s.infants > 0 && !meta.infants) return 'infant';
   if (nightsBetween(s.checkIn, s.checkOut) < minStay(meta, cal, s.checkIn)) return 'min';
   return 'fits';
 }
@@ -92,6 +93,7 @@ export default function HomePage() {
     else if (st === 'fits') line = <><span className="price"><b>{fmt(preTax)}</b> <span className="spec">total before taxes</span><br /><span className="spec sub">{fmt(avgNight)} avg a night · {nights} night{nights > 1 ? 's' : ''} · includes cleaning{search.pets > 0 ? ' and pet fee' : ''}</span></span><span className="ok">Open for your dates</span></>;
     else if (st === 'booked') { badge = <span className="badge gray">Booked for these dates</span>; line = <><span className="price"><span className="spec">from</span> <b>{fmt(nightly)}</b> <span className="spec">a night</span></span><span className="no">Tap to see open dates</span></>; }
     else if (st === 'guests') { badge = <span className="badge gray">Too small for {search.guests} guests</span>; line = <><span className="price"><span className="spec">Sleeps up to {meta.sleeps}</span></span><span className="no">Change guests to book this room</span></>; }
+    else if (st === 'infant') { badge = <span className="badge gray">No infants</span>; line = <><span className="price"><span className="spec">Children {meta.minChildAge} and up, shared walls</span></span><span className="no">Try the Carriage House or Grizzly Maze</span></>; }
     else { const mn = minStay(meta, calendars[meta.id], search.checkIn); line = <><span className="price"><b>{fmt(nightly)}</b> <span className="spec">a night, {mn} night minimum</span></span><span className="no">{mn} night minimum from {nice(search.checkIn)}</span></>; }
     // Long Hostex block = closed for the season: say when it opens and link straight to that date.
     let to = `/room/${meta.id}?${writeSearch(search)}`;
@@ -103,7 +105,7 @@ export default function HomePage() {
       to = `/room/${meta.id}?${writeSearch({ ...search, checkIn: reopen, checkOut: out })}`;
     }
     return (
-      <Link className={'card' + (st === 'booked' || st === 'guests' ? ' booked' : '')} to={to} style={wideCard ? { gridColumn: '1 / -1', maxWidth: 720, width: '100%', margin: '0 auto' } : undefined}>
+      <Link className={'card' + (st === 'booked' || st === 'guests' || st === 'infant' ? ' booked' : '')} to={to} style={wideCard ? { gridColumn: '1 / -1', maxWidth: 720, width: '100%', margin: '0 auto' } : undefined}>
         <img src={mock.image} alt={meta.short} loading="lazy" />{badge}
         <div className="body">
           <div className="row"><span className="name">{meta.short}</span><span className="rating"><b>★</b> {mock.rating.toFixed(2)} · {mock.reviews} reviews</span></div>
@@ -137,7 +139,7 @@ export default function HomePage() {
           <button className="btn go" type="submit">Show prices</button>
           {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', party: { guests: search.guests, pets: search.pets, children: search.children, infants: search.infants, onChange: (g, p, c, i) => { partyRef.current = { guests: g, pets: p, children: c, infants: i }; } }, onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b, ...(partyRef.current || {}) }); partyRef.current = null; setTimeout(showResults, 50); }} />}
         </form>
-        <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} guests={search.guests} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id)!; navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, minStay(m, calendars[id], d)) })}`); }} />
+        <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} guests={search.guests} infants={search.infants} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id)!; navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, minStay(m, calendars[id], d)) })}`); }} />
       </section>
 
       <section className="wrap"><div className="trust">

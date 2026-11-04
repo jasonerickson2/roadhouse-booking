@@ -36,7 +36,7 @@ export default function TermsPage() {
       <p>Pets are welcome only where the room allows them and only when added at checkout, with a per stay pet fee{lodgePet ? ` (from ${fmt(lodgePet)})` : ''}. Unapproved pets are charged as an incidental.</p>
 
       <h2>House rules</h2>
-      <p>No parties or events. No smoking. Adults and children (ages 2 to 12) count toward each room's guest limit. One infant under 2 per room is welcome and does not count. At least one adult must be on every booking. Each room's page lists its own house rules, and they are part of these terms.</p>
+      <p>No parties or events. No smoking. Adults and children count toward each stay's guest limit, and at least one adult must be on every booking. Rooms 1 to 3 and the Penthouse share walls, so children there must be 5 or older and infants are not allowed. The Carriage House and the Grizzly Maze welcome any age, with one infant under 2 per stay who does not count toward the limit. Each room's page lists its own house rules, and they are part of these terms.</p>
 
       <h2>Prices, taxes and fees</h2>
       <p>Totals include nightly rates, cleaning and a 2% card processing fee. Colorado state sales tax (2.9%), Lake County sales tax (4.0%) and lodging tax (1.9%) are added at checkout.</p>

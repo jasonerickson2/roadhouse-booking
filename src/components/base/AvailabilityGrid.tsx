@@ -8,6 +8,7 @@ interface Props {
   checkOut: Date;
   loading?: boolean;
   guests?: number;                                     // rooms that sleep fewer are dimmed
+  infants?: number;                                    // rooms that take no infants are dimmed
   onPick?: (roomId: number, date: Date) => void;       // tap an open night to start a stay there
 }
 
@@ -16,7 +17,7 @@ const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct
 const money = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
 
 // Rooms by nights. Open nights show that room's nightly rate (Hostex, display only); booked nights are striped.
-export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading, guests = 1, onPick }: Props) {
+export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading, guests = 1, infants = 0, onPick }: Props) {
   const t = today();
   const [offset, setOffset] = useState(0);
   const span = 21;
@@ -60,14 +61,15 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
           {STAY_META.map(s => {
             const known = !!calendars[s.id];
             const small = s.sleeps < guests;
+            const noInfant = infants > 0 && !s.infants;
             // Highlight the stay only on rooms that can actually take it: every night open, minimum met, sleeps enough.
             const stayOpen = known && !stayNights.some(k => isBooked(s.id, k));
             const mn = minStay(s, calendars[s.id], checkIn);
             const tooShort = stayOpen && !small && nightsBetween(checkIn, checkOut) < mn;
             const reopen = known && days.every(d => isBooked(s.id, key(d))) ? closedUntil(calendars[s.id], start) : null;
-            const fits = stayOpen && !small && !tooShort;
+            const fits = stayOpen && !small && !noInfant && !tooShort;
             return [
-              <div className={'ag-room' + (small || reopen ? ' dim' : '')} key={'n' + s.id}>{s.short.replace('The ', '')}<small className={tooShort ? 'warn' : ''}>{small ? `Too small for ${guests}` : reopen ? `Closed until ${reopen.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : tooShort ? `${mn} night minimum for these dates` : `Sleeps ${s.sleeps}${s.minNights > 1 ? ` · ${s.minNights} night min` : ''}`}</small></div>,
+              <div className={'ag-room' + (small || noInfant || reopen ? ' dim' : '')} key={'n' + s.id}>{s.short.replace('The ', '')}<small className={tooShort ? 'warn' : ''}>{small ? `Too small for ${guests}` : noInfant ? 'No infants' : reopen ? `Closed until ${reopen.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : tooShort ? `${mn} night minimum for these dates` : `Sleeps ${s.sleeps}${s.minNights > 1 ? ` · ${s.minNights} night min` : ''}`}</small></div>,
               ...days.map(d => {
                 const k = key(d); const b = isBooked(s.id, k); const p = priceOf(s.id, k);
                 const inStay = d >= checkIn && d < checkOut;

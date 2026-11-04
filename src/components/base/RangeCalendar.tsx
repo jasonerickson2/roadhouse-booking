@@ -7,7 +7,7 @@ interface ModalOpts {
   cta: string;                            // "Show rooms" / "Save dates"
   priceFrom?: boolean;                    // true when prices are the lowest across rooms ("from $230")
   // guests is adults plus children (what must fit sleeps); infants do not count, at most 1.
-  party?: { guests: number; pets: number; children?: number; infants?: number; maxGuests?: number; maxPets?: number; onChange: (guests: number, pets: number, children: number, infants: number) => void };
+  party?: { guests: number; pets: number; children?: number; infants?: number; minChildAge?: number; allowInfants?: boolean; maxGuests?: number; maxPets?: number; onChange: (guests: number, pets: number, children: number, infants: number) => void };
   onClose: () => void;
 }
 
@@ -194,8 +194,8 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
         {modal.party && (
           <div className="rc-party">
             <Stepper label="Adults" note="13 and up" value={adults} min={1} max={maxG - kids} onChange={setAdults} />
-            <Stepper label="Children" note="Ages 2 to 12" value={kids} min={0} max={maxG - adults} onChange={setKids} />
-            <Stepper label="Infants" note="Under 2" value={infants} min={0} max={1} onChange={setInfants} />
+            <Stepper label="Children" note={`Ages ${modal.party.minChildAge ?? 2} to 12`} value={kids} min={0} max={maxG - adults} onChange={setKids} />
+            {modal.party.allowInfants !== false && <Stepper label="Infants" note="Under 2" value={infants} min={0} max={1} onChange={setInfants} />}
             <Stepper label="Pets" value={pets} min={0} max={modal.party.maxPets ?? 2} onChange={setPets} />
           </div>
         )}
@@ -207,7 +207,7 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
           </div>
           <div className="rc-btns">
             <button type="button" className="rc-clear" onClick={() => { setPick(null); setHover(null); setDraft(null); }}>Clear</button>
-            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { modal.party?.onChange(adults + kids, pets, kids, infants); onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
+            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { modal.party?.onChange(adults + kids, pets, kids, modal.party?.allowInfants === false ? 0 : infants); onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
           </div>
         </div>
       </div>
