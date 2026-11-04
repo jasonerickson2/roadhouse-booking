@@ -42,6 +42,8 @@ export default function HomePage() {
   const { calendars, loading: calLoading } = useCalendars();
   const [calOpen, setCalOpen] = useState(false);
   const calRef = useRef<HTMLFormElement>(null);
+  // The picker reports guests and pets just before the dates; both go into one URL update.
+  const partyRef = useRef<{ guests: number; pets: number } | null>(null);
   // Results start with the availability calendar at the top of the screen, rooms right below it.
   const showResults = () => { const el = document.querySelector('.ag'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 12, behavior: 'smooth' }); };
   const [wide, setWide] = useState(() => window.innerWidth >= 700);
@@ -133,7 +135,7 @@ export default function HomePage() {
           <div className="field"><label htmlFor="pets">Pets</label>
             <select id="pets" value={search.pets} onChange={e => update({ pets: parseInt(e.target.value) })}><option value={0}>No pets</option><option value={1}>1 pet</option><option value={2}>2 pets</option></select></div>
           <button className="btn go" type="submit">Show prices</button>
-          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b }); setTimeout(showResults, 50); }} />}
+          {calOpen && <RangeCalendar checkIn={search.checkIn} checkOut={search.checkOut} blocked={allBlocked} modal={{ title: 'Select dates', cta: 'Show rooms', party: { guests: search.guests, pets: search.pets, onChange: (g, p) => { partyRef.current = { guests: g, pets: p }; } }, onClose: () => setCalOpen(false) }} onChange={(a, b) => { update({ checkIn: a, checkOut: b, ...(partyRef.current || {}) }); partyRef.current = null; setTimeout(showResults, 50); }} />}
         </form>
         <AvailabilityGrid calendars={calendars} checkIn={search.checkIn} checkOut={search.checkOut} loading={calLoading} guests={search.guests} onPick={(id, d) => { const m = STAY_META.find(x => x.id === id)!; navigate(`/room/${id}?${writeSearch({ ...search, checkIn: d, checkOut: addDays(d, minStay(m, calendars[id], d)) })}`); }} />
       </section>

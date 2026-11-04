@@ -6,6 +6,7 @@ interface ModalOpts {
   title: string;                          // "Select dates" or the room name
   cta: string;                            // "Show rooms" / "Save dates"
   priceFrom?: boolean;                    // true when prices are the lowest across rooms ("from $230")
+  party?: { guests: number; pets: number; maxGuests?: number; maxPets?: number; onChange: (guests: number, pets: number) => void };
   onClose: () => void;
 }
 
@@ -57,6 +58,8 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
     return new Date(base.getFullYear(), base.getMonth(), 1);
   });
   const shown = modal ? 2 : months;
+  const [guests, setGuests] = useState(modal?.party?.guests ?? 2);
+  const [pets, setPets] = useState(modal?.party?.pets ?? 0);
 
   // Modal: Escape closes, page behind does not scroll.
   useEffect(() => {
@@ -184,19 +187,36 @@ export default function RangeCalendar({ checkIn, checkOut, onChange, blocked, no
           <button type="button" className="rc-x" onClick={modal.onClose} aria-label="Close">✕</button>
         </div>
         <div className="calrow">{blocks}</div>
+        {modal.party && (
+          <div className="rc-party">
+            <Stepper label="Guests" value={guests} min={1} max={modal.party.maxGuests ?? 8} onChange={setGuests} />
+            <Stepper label="Pets" value={pets} min={0} max={modal.party.maxPets ?? 2} onChange={setPets} />
+          </div>
+        )}
         <div className="rc-foot">
-          <div className="rc-legend"><span><i className="k-booked" />Booked</span><span>{modal.priceFrom ? 'Lowest nightly rate' : 'Price per night'}</span></div>
+          <div className="rc-legend"><span><i className="k-booked" />Booked</span>{nightly && <span>{modal.priceFrom ? 'Lowest nightly rate' : 'Price per night'}</span>}</div>
           <div className="rc-sum">
             {draft && priced ? <><b>{modal.priceFrom ? 'from ' : ''}{money(sum)}</b><span>{nights} night{nights > 1 ? 's' : ''} before fees</span></>
               : <span>{draft ? `${nights} night${nights > 1 ? 's' : ''}` : 'Pick your dates'}</span>}
           </div>
           <div className="rc-btns">
             <button type="button" className="rc-clear" onClick={() => { setPick(null); setHover(null); setDraft(null); }}>Clear</button>
-            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
+            <button type="button" className="rc-go" disabled={!draft} onClick={() => { if (draft) { modal.party?.onChange(guests, pets); onChange(draft.a, draft.b); modal.onClose(); } }}>{modal.cta}</button>
           </div>
         </div>
       </div>
     </div>,
     document.body,
+  );
+}
+
+function Stepper({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
+  return (
+    <div className="rc-step">
+      <span>{label}</span>
+      <button type="button" aria-label={`Fewer ${label.toLowerCase()}`} disabled={value <= min} onClick={() => onChange(value - 1)}>−</button>
+      <b aria-live="polite">{value}</b>
+      <button type="button" aria-label={`More ${label.toLowerCase()}`} disabled={value >= max} onClick={() => onChange(value + 1)}>+</button>
+    </div>
   );
 }

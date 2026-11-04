@@ -347,3 +347,11 @@ button.ag-c:hover{outline:2px solid var(--ink);outline-offset:-2px}
 .card .price .spec.sub{font-size:12px}
 .ag-room small.warn{color:var(--warn);white-space:normal}
 .ag-c.short{box-shadow:inset 0 0 0 2px var(--warn)}
+.rc-party{display:flex;gap:28px;justify-content:flex-end;align-items:center;padding:14px 0 0;border-top:1px solid #EEE9DF;margin-top:12px;flex-wrap:wrap}
+.rc-step{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600}
+.rc-step span{margin-right:4px}
+.rc-step button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:18px;line-height:1;cursor:pointer;color:var(--ink)}
+.rc-step button:disabled{opacity:.3;cursor:default}
+.rc-step b{min-width:16px;text-align:center}
+.rc-party + .rc-foot{border-top:0;margin-top:0}
+@media (max-width:640px){.rc-party{justify-content:space-between;gap:12px}}
