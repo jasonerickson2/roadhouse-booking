@@ -45,8 +45,8 @@
         if(document.cookie.indexOf('mhr_banner=1')>-1){b.remove();return;}
         var optIn;try{optIn=/^America\/(Los_Angeles|Tijuana)$/.test(Intl.DateTimeFormat().resolvedOptions().timeZone);}catch(e){optIn=true;} // same rule as recover.js; that script is deferred and not loaded yet
         document.getElementById('mhr-text').innerHTML=optIn
-          ?'May we use cookies to remember your booking and check in by email if you don\u2019t finish? <a href="/terms#cookies" style="color:inherit">Details</a>'
-          :'We use cookies to remember your booking and may check in by email if you don\u2019t finish. <a href="/terms#cookies" style="color:inherit">Details</a>';
+          ?'May we use cookies to save your trip details and help you finish booking? <a href="/terms#cookies" style="color:inherit">Details</a>'
+          :'We use cookies to save your trip details and help you finish booking. <a href="/terms#cookies" style="color:inherit">Details</a>';
         document.getElementById('mhr-yes').textContent=optIn?'Okay':'Got it';
         function done(){b.remove();document.cookie='mhr_banner=1; max-age=31536000; path=/; SameSite=Lax';}
         document.getElementById('mhr-yes').onclick=function(){if(optIn&&window.MHRecover)MHRecover.consent();done();};

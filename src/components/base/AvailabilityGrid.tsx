@@ -86,7 +86,7 @@ export default function AvailabilityGrid({ calendars, checkIn, checkOut, loading
         <span><i className="k-open" />Open, price per night</span>
         <span><i className="k-booked" />Booked</span>
         <span><i className="k-sel" />Your dates, rooms that fit</span>
-        {lowest && <span><b>{money(lowest)}</b> lowest rate</span>}
+        {lowest && <span><b>{money(lowest)}</b> lowest in these 3 weeks</span>}
         {loading && <span>Checking the calendar…</span>}
       </div>
     </div>
