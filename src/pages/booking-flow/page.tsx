@@ -44,6 +44,12 @@ export default function BookingFlowPage() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   // Backup path (owner, 2026-11-03): when the payment form, prices or the booking server fail, offer phone and text.
   const [systemDown, setSystemDown] = useState(false);
+  // Text the owner (through booking-site-health, at most once per 30 min) the first time a guest hits the backup.
+  useEffect(() => {
+    if (!systemDown) return;
+    const report = `${room?.name ?? 'room ' + roomId} ${checkIn} to ${checkOut}: ${paymentError ?? 'prices or payment did not load'}`;
+    try { navigator.sendBeacon('https://txbebwaxaqvxxjcmftjt.supabase.co/functions/v1/booking-site-health', new Blob([JSON.stringify({ report })], { type: 'text/plain' })); } catch { /* best effort */ }
+  }, [systemDown]);
   const [squareCard, setSquareCard] = useState<any>(null);
   const [isInitializingSquare, setIsInitializingSquare] = useState(false);
   const [storeCard, setStoreCard] = useState(true);
@@ -591,7 +597,8 @@ export default function BookingFlowPage() {
             )}
             {systemDown && (
               <div className="note backup" role="status">
-                <b>Online booking is having trouble right now.</b> Book by phone or text and we'll hold your dates: <a href="tel:+17192252364">719 225 2364</a> (<a href="sms:+17192252364">text</a>). Your card has not been charged. You can also use our <a href="https://roadhouse-booking.hostexbooking.site/" target="_blank" rel="noopener">backup booking page</a>.
+                <span><b>Online booking is having trouble right now.</b> Your card has not been charged. Book on our backup page instead, or call or text <a href="tel:+17192252364">719 225 2364</a>.</span>
+                <a className="btn backup-go" href="https://roadhouse-booking.hostexbooking.site/" target="_blank" rel="noopener">Book on our backup page</a>
               </div>
             )}
 
