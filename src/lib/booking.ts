@@ -68,15 +68,16 @@ export function writeSearch(s: SearchState, extra: Record<string, string> = {}):
 // same way booking-api does, so the label the guest sees is the one the server enforces.
 export function season(d: Date): 'summer' | 'winter' {
   const y = d.getFullYear();
-  const memorialDay = new Date(y, 4, 31); memorialDay.setDate(31 - memorialDay.getDay() + 1); // last Monday of May
+  // Last Monday of May. The old 31 - day + 1 picked June 1 when May 31 was a Sunday (2026, 2037).
+  const memorialDay = new Date(y, 4, 31); memorialDay.setDate(31 - ((memorialDay.getDay() + 6) % 7));
   const start = new Date(memorialDay); start.setDate(memorialDay.getDate() - 2);
   const end = new Date(y, 9, 31, 23, 59, 59);
   return d >= start && d <= end ? 'summer' : 'winter';
 }
 export function policy(d: Date) {
   return season(d) === 'summer'
-    ? { label: 'Summer cancellation policy (Memorial Day weekend to October 31)', rules: ['30 or more days before check in: full refund', '14 to 30 days before check in: 50% refund', 'Under 14 days: no refund', 'Processing fees are not refundable'] }
-    : { label: 'Winter cancellation policy (November 1 to Memorial Day)', rules: ['14 or more days before check in: full refund', '7 to 14 days before check in: 50% refund', 'Under 7 days: no refund', 'Processing fees are not refundable'] };
+    ? { label: 'Summer cancellation policy (Saturday of Memorial Day weekend through October 31)', rules: ['30 or more days before check in: full refund', '14 to 29 days before check in: 50% refund', 'Under 14 days: no refund', 'Processing fees are not refundable'] }
+    : { label: 'Winter cancellation policy (November 1 through the Friday before Memorial Day weekend)', rules: ['14 or more days before check in: full refund', '7 to 13 days before check in: 50% refund', 'Under 7 days: no refund', 'Processing fees are not refundable'] };
 }
 
 // ---- add on pricing on top of the API quote ----

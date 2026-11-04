@@ -42,8 +42,8 @@ export default function TermsPage() {
       <p>Totals include nightly rates, cleaning and a 2% card processing fee. Colorado state sales tax (2.9%), Lake County sales tax (4.0%) and lodging tax (1.9%) are added at checkout.</p>
 
       <h2 id="cookies">Cookies and follow ups</h2>
-      <p>This site sets first party cookies to remember your search and booking. It also records which pages you visit, the dates and party size you search, your device type, how you found us, and your approximate area (state and city, not your exact address). If you start a booking and don't finish, we or a service provider working for us may match your visit to an email address so we can check in once or twice about your stay. Every email has an unsubscribe link.</p>
-      <p>To opt out, tap "No thanks" on the notice at the top of the site, or turn on Global Privacy Control in your browser. Visitors in California are not tracked unless they choose "Okay." We do not sell this information.</p>
+      <p>We use cookies to remember your search and to see which pages you visit, what dates you look at, your device, how you found us and roughly where you are (city and state). If you start a booking and don't finish, we or a partner may match your visit to an email address and check in once or twice. Every email has an unsubscribe link.</p>
+      <p>To opt out, tap "No thanks" on the notice at the top or turn on Global Privacy Control. California visitors aren't tracked unless they tap "Okay." We never sell your information.</p>
 
       <p style={{ marginTop: 28 }}><Link to="/">Back to booking</Link></p>
     </main>
