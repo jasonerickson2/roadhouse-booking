@@ -262,10 +262,11 @@ export interface RoomCalendar {
   blockedDates: Set<string>;             // sold out (inventory 0) -> cannot be a night of the stay
   noArrivalDates: Set<string>;           // closed on arrival -> cannot be a check-in date
   minNightsByDate: Record<string, number>; // min nights required when checking in on that date
+  priceByDate: Record<string, number>;     // nightly rate from Hostex, shown in calendar cells (display only)
 }
 
 export async function fetchRoomCalendar(roomId: number): Promise<RoomCalendar> {
-  const empty: RoomCalendar = { blockedDates: new Set(), noArrivalDates: new Set(), minNightsByDate: {} };
+  const empty: RoomCalendar = { blockedDates: new Set(), noArrivalDates: new Set(), minNightsByDate: {}, priceByDate: {} };
   // Preview/mock origins don't hit the live API; return empty (no restrictions).
   if (!isProdOrigin()) return empty;
   try {
@@ -273,11 +274,17 @@ export async function fetchRoomCalendar(roomId: number): Promise<RoomCalendar> {
     if (!res.ok) return empty;
     const data = await res.json();
     const minNightsByDate: Record<string, number> = {};
-    for (const d of (data.days || [])) minNightsByDate[d.date] = d.minNights || 1;
+    const priceByDate: Record<string, number> = {};
+    for (const d of (data.days || [])) {
+      minNightsByDate[d.date] = d.minNights || 1;
+      const p = Number(d.price);
+      if (p > 0) priceByDate[d.date] = p;
+    }
     return {
       blockedDates: new Set<string>(data.blockedDates || []),
       noArrivalDates: new Set<string>(data.noArrivalDates || []),
       minNightsByDate,
+      priceByDate,
     };
   } catch (e) {
     console.error('fetchRoomCalendar failed:', e);
