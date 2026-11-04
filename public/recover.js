@@ -1,4 +1,5 @@
-/*  MileHigh Recover pixel  v0.1
+/*  MileHigh Recover pixel  v0.2 (2026-11-03: location via recover.milehigh.systems/c, plus timezone,
+ *  device type, first touch source and trip details from the page's own search fields)
  *  Install: <script src="https://api.milehigh.systems/recover.js" data-key="YOUR_PIXEL_KEY" defer></script>
  *
  *  Rules this script enforces, on purpose:
@@ -8,7 +9,9 @@
  *   2. Global Privacy Control (navigator.globalPrivacyControl) is honored as a hard opt out.
  *   3. The only identifier we create is a random first party id in a cookie we own.
  *      No fingerprinting, no reading other cookies, no form scraping.
- *   4. We send: our visitor id, the page path, a booking page flag, timestamp. Nothing else.
+ *   4. We send: our visitor id, page path, timestamp, browser timezone, phone/tablet/desktop, how they
+ *      arrived (utm_source or referring site, first visit only) and trip details already in the URL
+ *      (dates, guests, pets, room). Coarse location (state, city) is added by our edge proxy; the IP is not kept.
  */
 (function () {
   'use strict';
@@ -17,7 +20,7 @@
     return all[all.length - 1];
   })();
   var KEY = s && s.getAttribute('data-key');
-  var ENDPOINT = (s && s.getAttribute('data-endpoint')) || 'https://xgxmrcehxfvshygxzsyg.supabase.co/functions/v1/recover-collect';
+  var ENDPOINT = (s && s.getAttribute('data-endpoint')) || 'https://recover.milehigh.systems/c';
   if (!KEY) return;
 
   // Hard opt out: Global Privacy Control.
@@ -57,6 +60,30 @@
     for (var i = 0; i < hints.length; i++) if (p.indexOf(hints[i]) === 0 || p.indexOf(hints[i] + '/') > -1) return true;
     return !!document.querySelector('[data-mhr-booking]');
   }
+  function device() {
+    var w = Math.min(screen.width || 0, window.innerWidth || 9999);
+    if (/iPad|Tablet/i.test(navigator.userAgent) || (w >= 600 && w < 1024 && 'ontouchstart' in window)) return 'tablet';
+    return (/Mobi|Android|iPhone/i.test(navigator.userAgent) || w < 600) ? 'phone' : 'desktop';
+  }
+  // First touch: utm_source, else the referring site, else direct. Kept 30 days so later visits keep it.
+  function source() {
+    var q = new URLSearchParams(location.search), src = q.get('utm_source');
+    if (src) src = src + (q.get('utm_medium') ? ' / ' + q.get('utm_medium') : '') + (q.get('utm_campaign') ? ' / ' + q.get('utm_campaign') : '');
+    else if (document.referrer) { try { var h = new URL(document.referrer).hostname.replace(/^www\./, ''); if (h !== location.hostname) src = h; } catch (e) {} }
+    var have = getCookie('mhr_src');
+    if (!have) { have = src || 'direct'; setCookie('mhr_src', have, 30); setCookie('mhr_land', location.pathname, 30); }
+    return have;
+  }
+  function trip() {
+    var q = new URLSearchParams(location.search), t = {};
+    ['checkIn', 'checkOut', 'guests', 'pets', 'roomId'].forEach(function (k) { var v = q.get(k); if (v && v.length < 20) t[k] = v; });
+    var m = location.pathname.match(/^\/room\/(\d+)/); if (m) t.roomId = m[1];
+    return Object.keys(t).length ? t : null;
+  }
+  function ctx() {
+    var tz = null; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
+    return { tz: tz, device: device(), source: source(), landing: getCookie('mhr_land'), trip: trip() };
+  }
   function send(kind, extra) {
     if (!hasConsent()) return;
     var body = JSON.stringify({
@@ -67,6 +94,7 @@
       ref: document.referrer ? document.referrer.split('?')[0] : null,
       ts: new Date().toISOString(),
       ref_send: getCookie('mhr_ref'),
+      ctx: ctx(),
       meta: extra || {}
     });
     if (navigator.sendBeacon) {
