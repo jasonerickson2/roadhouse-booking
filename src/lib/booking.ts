@@ -100,3 +100,21 @@ export function extrasNote(meta: StayMeta, x: Extras) {
   if (x.late && meta.addOnFee > 0) parts.push(`Late checkout ${LATE_LABEL} (${fmt(meta.addOnFee)})`);
   return parts.join(', ');
 }
+
+// ---- calendar driven rules (Hostex is the source of truth) ----
+type CalLike = { blockedDates: Set<string>; minNightsByDate?: Record<string, number> } | undefined;
+
+// Minimum stay for a check in date. Hostex lowers it for gap nights (a 2 night gap gets a 2 night minimum),
+// so the room's standard minimum is only the fallback.
+export function minStay(meta: StayMeta, cal: CalLike, checkIn: Date): number {
+  return cal?.minNightsByDate?.[key(checkIn)] || meta.minNights;
+}
+
+// A long block (21+ nights in a row from `from`) reads as closed, not booked. Returns the first open night after it.
+export const CLOSED_RUN = 21;
+export function closedUntil(cal: CalLike, from: Date): Date | null {
+  if (!cal || !cal.blockedDates.size) return null;
+  let d = new Date(from), run = 0;
+  while (cal.blockedDates.has(key(d)) && run < 600) { run++; d = addDays(d, 1); }
+  return run >= CLOSED_RUN ? d : null;
+}

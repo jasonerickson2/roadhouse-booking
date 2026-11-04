@@ -6,7 +6,7 @@ import RangeCalendar from '../../components/base/RangeCalendar';
 import Lightbox from '../../components/base/Lightbox';
 import { useAvailability, useCalendars } from '../../hooks/useBookingData';
 import { fetchAddOnOffer, type AddOnOffer } from '../../services/availability';
-import { addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState, EARLY_LABEL, LATE_LABEL } from '../../lib/booking';
+import { addDays, extrasTotal, fmt, key, metaById, nice, nightsBetween, policy, readSearch, writeSearch, type Extras, type SearchState, EARLY_LABEL, LATE_LABEL, minStay } from '../../lib/booking';
 import { stayStatus } from '../home/page';
 
 export default function RoomDetailPage() {
@@ -75,7 +75,7 @@ export default function RoomDetailPage() {
         <Link className="btn btn-wood" to={reserveTo} style={{ width: '100%' }}>Reserve</Link>
         <span className="fine center">Card held, not charged, until we confirm. Usually within the hour.</span>
       </> : <>
-        <div className="note"><b>{st === 'loading' ? 'Checking availability…' : st === 'booked' ? `Booked ${nice(search.checkIn)} to ${nice(search.checkOut)}.` : st === 'guests' ? `Sleeps up to ${meta.sleeps}.` : `${meta.minNights} night minimum.`}</b> {st === 'booked' ? 'Pick open dates below, dark nights are taken.' : st === 'loading' ? '' : 'Change your search to see a price.'}{error ? ` ${error}` : ''}</div>
+        <div className="note"><b>{st === 'loading' ? 'Checking availability…' : st === 'booked' ? `Booked ${nice(search.checkIn)} to ${nice(search.checkOut)}.` : st === 'guests' ? `Sleeps up to ${meta.sleeps}.` : `${minStay(meta, cal, search.checkIn)} night minimum.`}</b> {st === 'booked' ? 'Pick open dates below, dark nights are taken.' : st === 'loading' ? '' : 'Change your search to see a price.'}{error ? ` ${error}` : ''}</div>
         <div className="dates">
           <div className="field"><span>Check in</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkIn)}</button></div>
           <div className="field"><span>Check out</span><button type="button" className="date" onClick={() => setShowCal(s => !s)}>{nice(search.checkOut)}</button></div>
