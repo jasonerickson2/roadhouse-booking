@@ -1,4 +1,8 @@
-/*  MileHigh Recover pixel  v0.3 (2026-11-03, owner decision): notice mode. Visitors are tracked unless they click
+/*  MileHigh Recover pixel  v0.4 (2026-11-13, owner approved): click tracking (the text and destination of the link or
+ *  button clicked, and which part of the page it is in; never anything typed into a form). One visitor across sites:
+ *  links to hosts listed in data-link-hosts carry mhr_vid, and the receiving site adopts it when it has no id yet.
+ *  data-notice="1" makes the script show its own cookie notice (for sites with no banner of their own, like Wix).
+ *  v0.3 (2026-11-03, owner decision): notice mode. Visitors are tracked unless they click
  *  No thanks or send Global Privacy Control. Visitors in a Pacific timezone (possible California) are opt in:
  *  nothing is sent until they click Okay.
  *  v0.2 (2026-11-03: location via recover.milehigh.systems/c, plus timezone,
@@ -23,6 +27,9 @@
   })();
   var KEY = s && s.getAttribute('data-key');
   var ENDPOINT = (s && s.getAttribute('data-endpoint')) || 'https://recover.milehigh.systems/c';
+  var LINK_HOSTS = ((s && s.getAttribute('data-link-hosts')) || '').toLowerCase().split(/\s+/).filter(Boolean);
+  var NOTICE = s && s.getAttribute('data-notice') === '1';
+  var DETAILS = (s && s.getAttribute('data-details')) || 'https://roadhouse.milehigh.systems/terms#cookies';
   if (!KEY) return;
 
   // Hard opt out: Global Privacy Control.
@@ -43,6 +50,20 @@
       '; expires=' + d.toUTCString() + '; path=/; SameSite=Lax' +
       (location.protocol === 'https:' ? '; Secure' : '');
   }
+  // v0.4: a link from our other site carries ?mhr_vid=<id>. Take it as our id when we have none yet (so one person is one
+  // visitor across both sites); if we already have a different id, remember the other one so the two can be joined.
+  // The parameter is removed from the address bar so a shared link never carries someone else's id.
+  var fromVid = null;
+  (function () {
+    var m = location.search.match(/[?&]mhr_vid=([0-9a-f]{32})(?=&|$)/i);
+    if (!m) return;
+    if (!getCookie('mhr_vid')) setCookie('mhr_vid', m[1].toLowerCase(), 365);
+    else if (getCookie('mhr_vid') !== m[1].toLowerCase()) fromVid = m[1].toLowerCase();
+    try {
+      var u = new URL(location.href); u.searchParams.delete('mhr_vid');
+      history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+    } catch (e) {}
+  })();
   function optInRequired() {
     try { return /^America\/(Los_Angeles|Tijuana)$/.test(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch (e) { return true; }
   }
@@ -142,7 +163,71 @@
     }
   };
 
-  function track() { send(isBookingPage() ? 'booking_page' : 'pageview'); }
+  function track() {
+    var meta = null;
+    if (fromVid) { meta = { from_vid: fromVid }; fromVid = null; }
+    send(isBookingPage() ? 'booking_page' : 'pageview', meta);
+  }
+
+  // v0.4 clicks. Links and buttons only. We keep the visible label, where a link goes (no query string) and which part
+  // of the page it is in. Inputs, selects and text areas are never read.
+  var lastClick = { el: null, t: 0 };
+  function label(el) {
+    var t = el.getAttribute('aria-label') || el.innerText || el.value || el.getAttribute('title') || '';
+    if (!t) { var img = el.querySelector && el.querySelector('img[alt]'); if (img) t = img.getAttribute('alt'); }
+    return String(t).replace(/\s+/g, ' ').trim().slice(0, 80);
+  }
+  function dest(el) {
+    var h = el.getAttribute && el.getAttribute('href');
+    if (!h) return null;
+    if (/^(tel|mailto|sms):/i.test(h)) return h.slice(0, 120);
+    try { var u = new URL(h, location.href); return (u.host === location.host ? '' : u.protocol + '//' + u.host) + u.pathname + (u.hash && u.hash.length < 40 ? u.hash : ''); } catch (e) { return null; }
+  }
+  function area(el) {
+    var a = el.closest('[data-mhr-area]'); if (a) return a.getAttribute('data-mhr-area');
+    var l = el.closest('header,nav,footer,form,aside,dialog,[role=dialog]');
+    return l ? (l.getAttribute('role') || l.tagName.toLowerCase()) : 'main';
+  }
+  document.addEventListener('click', function (ev) {
+    var el = ev.target && ev.target.closest && ev.target.closest('a,button,[role=button],input[type=submit],input[type=button],summary');
+    if (!el || el.closest('#mhr-banner')) return;
+    var now = Date.now();
+    if (lastClick.el === el && now - lastClick.t < 800) return;
+    lastClick = { el: el, t: now };
+    // Carry our id to our other site so the visit continues as the same person.
+    if (el.tagName === 'A' && LINK_HOSTS.length && hasConsent()) {
+      try {
+        var u = new URL(el.getAttribute('href'), location.href);
+        if (LINK_HOSTS.indexOf(u.hostname.toLowerCase()) > -1) { u.searchParams.set('mhr_vid', visitorId()); el.setAttribute('href', u.toString()); }
+      } catch (e) {}
+    }
+    send('click', { text: label(el), href: dest(el), el: el.tagName.toLowerCase(), area: area(el) });
+  }, true);
+
+  // v0.4 own notice, only when the page asks for it (data-notice="1") and has not been answered on this site.
+  function showNotice() {
+    if (!NOTICE || getCookie('mhr_banner') === '1' || getCookie('mhr_consent') === '0') return;
+    var optIn = optInRequired();
+    var b = document.createElement('div');
+    b.id = 'mhr-banner';
+    b.setAttribute('role', 'region'); b.setAttribute('aria-label', 'Cookie notice');
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#0D2123;color:#F5F1E8;font:13px/1.4 Montserrat,system-ui,sans-serif;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 -2px 8px rgba(0,0,0,.2)';
+    var txt = document.createElement('span');
+    txt.appendChild(document.createTextNode(optIn ? 'May we use cookies to see how visitors use our site and help you book? ' : 'We use cookies to see how visitors use our site and help you book. '));
+    var a = document.createElement('a'); a.href = DETAILS; a.target = '_blank'; a.rel = 'noopener'; a.style.color = 'inherit'; a.textContent = 'Details';
+    txt.appendChild(a);
+    var yes = document.createElement('button'), no = document.createElement('button');
+    yes.textContent = optIn ? 'Okay' : 'Got it'; no.textContent = 'No thanks';
+    yes.style.cssText = 'background:#F5F1E8;color:#0D2123;border:0;padding:6px 14px;border-radius:999px;font:inherit;font-weight:700;cursor:pointer';
+    no.style.cssText = 'background:transparent;color:#F5F1E8;border:1px solid rgba(245,241,232,.6);padding:6px 14px;border-radius:999px;font:inherit;cursor:pointer';
+    function done() { b.remove(); setCookie('mhr_banner', '1', 365); }
+    yes.onclick = function () { if (optIn) window.MHRecover.consent(); done(); };
+    no.onclick = function () { window.MHRecover.revoke(); done(); };
+    var btns = document.createElement('span'); btns.style.cssText = 'display:flex;gap:8px'; btns.appendChild(yes); btns.appendChild(no);
+    b.appendChild(txt); b.appendChild(btns);
+    (document.body || document.documentElement).appendChild(b);
+  }
+  if (document.body) showNotice(); else document.addEventListener('DOMContentLoaded', showNotice);
 
   // Single page apps change routes without a page load. Hook history so each route counts.
   var lastPath = location.pathname;
